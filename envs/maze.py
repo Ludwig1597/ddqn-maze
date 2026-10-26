@@ -2,6 +2,15 @@ import numpy as np
 
 # 8个固定障碍格
 WALLS = {(1, 1), (1, 2), (2, 4), (3, 1), (3, 5), (4, 3), (5, 4), (6, 6)}
+# fmt: off
+MOVES = {
+    0: (-1, 0), # up
+    1: (1, 0),  # down
+    2: (0, -1), # left
+    3: (0, 1)   # right
+}        
+# fmt: on
+
 
 class CoinMaze:
     # 创建迷宫对象，设置基础配置
@@ -63,3 +72,61 @@ class CoinMaze:
     # step() 是强化学习中 Agent（智能体）与 Environment（环境）交互的核心接口。
     # 环境的 step() 对应 MDP 中的状态转移和奖励机制。
     # 智能体在状态 (s_t) 执行动作 (a_t)，环境产生：(s_t,a_t)=>(s_t+1,r_t+1)
+    # 文档要求 step() 接收一个动作，并返回：next_obs, reward, done, info
+    # 返回值	 含义
+    # next_obs	执行动作后的新观测
+    # reward	本次动作获得的奖励
+    # done	    本回合是否结束
+    # info	    附加信息，当前可以为空字典
+    def step(self, a):
+        # 1. 步数+1
+        self.t += 1
+        # 2. 根据动作获得位置偏移
+        dr, dc = MOVES[a]
+        # 3. 计算目标位置
+        nr = self.pos[0] + dr
+        nc = self.pos[1] + dc
+        # 4. 默认每步奖励
+        reward = -0.01
+        # 5. 检查目标格子是否可通行
+        if not self._free(nr, nc):
+            # TODO 1:
+            # 撞墙时位置不变
+            # 在reward基础上在减去0.02
+            reward-=0.02
+        else:
+            # TODO 2:
+            # 更新智能体的位置 self.pos
+            # 使用np.array
+            self.pos=np.array([nr,nc])
+            reward-=0.01
+        # 6. 检查是否到达金币
+        # tuple() 会把 NumPy 数组转换为 Python 元组。
+        if tuple(self.pos) == self.coin:
+            # TODO 3:
+            # 返回None，+1.0，True，{}
+            reward+=1.0
+            return None,reward,True,{}
+        # 7. 检查是否踏入陷阱
+        if tuple(self.pos) in self.traps:
+            # TODO 4:
+            # 返回None，-1.0，True，{}
+            reward-=1.0
+            return None,reward,True,{}
+        # 8. 检查是否到达最大步数
+        done = self.t >= self.max_steps
+        # 9. 返回本次交互结果
+        return None,reward,done,{}
+
+    def _free(self, r, c):
+        # TODO 1:
+        # 如果 r 或 c 超出地图边界，返回 False
+        if r < 0 or r >= self.size() or c < 0 or c >= self.size():
+            return False
+        # TODO 2:
+        # 如果 self.walls[r, c] == 1，返回 False
+        if self.walls[r, c] == 1:
+            return False
+        # TODO 3:
+        # 否则返回 True
+        return True
