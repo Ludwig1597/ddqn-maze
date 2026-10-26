@@ -62,4 +62,14 @@ assert done is True
 
 print("Test 5: Time limit PASSED")
 
+# 额外测试：边界和障碍
+env = CoinMaze(seed=42)
+
+assert env._free(-1, 0) is False
+assert env._free(8, 0) is False
+assert env._free(1, 1) is False
+assert env._free(0, 1) is True
+
+print("Test 6: Boundary tests PASSED!")
+
 print("All step tests PASSED!")
