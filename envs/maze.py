@@ -93,35 +93,34 @@ class CoinMaze:
             # TODO 1:
             # 撞墙时位置不变
             # 在reward基础上在减去0.02
-            reward-=0.02
+            reward -= 0.02
         else:
             # TODO 2:
             # 更新智能体的位置 self.pos
             # 使用np.array
-            self.pos=np.array([nr,nc])
-            reward-=0.01
+            self.pos = np.array([nr, nc])
         # 6. 检查是否到达金币
         # tuple() 会把 NumPy 数组转换为 Python 元组。
         if tuple(self.pos) == self.coin:
             # TODO 3:
             # 返回None，+1.0，True，{}
-            reward+=1.0
-            return None,reward,True,{}
+            # 到达终点金币直接获得 +1.0，不叠加步数惩罚。
+            return None, 1.0, True, {}
         # 7. 检查是否踏入陷阱
         if tuple(self.pos) in self.traps:
             # TODO 4:
             # 返回None，-1.0，True，{}
-            reward-=1.0
-            return None,reward,True,{}
+            # 到达陷阱直接获得 -1.0，不叠加步数惩罚。
+            return None, -1.0, True, {}
         # 8. 检查是否到达最大步数
         done = self.t >= self.max_steps
         # 9. 返回本次交互结果
-        return None,reward,done,{}
+        return None, reward, done, {}
 
     def _free(self, r, c):
         # TODO 1:
         # 如果 r 或 c 超出地图边界，返回 False
-        if r < 0 or r >= self.size() or c < 0 or c >= self.size():
+        if r < 0 or r >= self.size or c < 0 or c >= self.size:
             return False
         # TODO 2:
         # 如果 self.walls[r, c] == 1，返回 False
