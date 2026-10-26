@@ -65,8 +65,8 @@ class CoinMaze:
         for i in indices:
             self.traps.add(self.trap_cands[i])
 
-        # 暂时返回 None，等完成 obs() 后再替换
-        return None
+        # 返回 obs()
+        return self.obs()
 
     # step()：控制智能体与环境交互。
     # step() 是强化学习中 Agent（智能体）与 Environment（环境）交互的核心接口。
@@ -103,19 +103,19 @@ class CoinMaze:
         # tuple() 会把 NumPy 数组转换为 Python 元组。
         if tuple(self.pos) == self.coin:
             # TODO 3:
-            # 返回None，+1.0，True，{}
+            # 返回obs()，+1.0，True，{}
             # 到达终点金币直接获得 +1.0，不叠加步数惩罚。
-            return None, 1.0, True, {}
+            return self.obs(), 1.0, True, {}
         # 7. 检查是否踏入陷阱
         if tuple(self.pos) in self.traps:
             # TODO 4:
-            # 返回None，-1.0，True，{}
+            # 返回obs()，-1.0，True，{}
             # 到达陷阱直接获得 -1.0，不叠加步数惩罚。
-            return None, -1.0, True, {}
+            return self.obs(), -1.0, True, {}
         # 8. 检查是否到达最大步数
         done = self.t >= self.max_steps
         # 9. 返回本次交互结果
-        return None, reward, done, {}
+        return self.obs(), reward, done, {}
 
     def _free(self, r, c):
         # TODO 1:
