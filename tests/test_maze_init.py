@@ -22,3 +22,12 @@ assert env.coin is None
 assert env.traps==set()
 
 print("Maze initialization test PASSED!")
+
+env.reset()
+assert env.t==0
+assert tuple(env.pos)==(0,0)
+assert env.coin in env.coin_cands
+assert len(env.traps)==3
+assert env.traps.issubset(set(env.trap_cands)) #is sub set: 用于检查当前生成的陷阱是否全部来自允许的候选位置。
+
+print("Maze reset test PASSED!")
