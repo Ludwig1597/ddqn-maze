@@ -165,29 +165,28 @@ class CoinMaze:
             for j in range(2 * K + 1):
                 # TODO 1:
                 # 将局部坐标(i,j)转换成全局坐标(r,c)
-                r = r0 + i - 2
-                c = c0 + j - 2
+                r = r0 + i - K
+                c = c0 + j - K
 
                 # TODO 2:
                 # 如果(r,c)不可通行，跳过本次循环
                 # 提示：self._free(r,c)和continue
-                if not self._free(r,c):
+                if not self._free(r, c):
                     continue
 
                 # TODO 3:
                 # 可通行区域：通道0的对应位置设为1
-                o[0,r,c]=1 # 表示视野内的(i,j)可以通行
+                o[0, i, j] = 1  # 表示视野内的(i,j)可以通行
                 # TODO 4:
                 # 如果(r,c)是金币位置
                 # 将通道1的对应位置设为1
-                if tuple(r,c)==self.coin:
-                    o(1,r,c)=1 # 表示视野内的(i,j)为金币所在格
+                if (r, c) == self.coin:
+                    o[1, i, j] = 1  # 表示视野内的(i,j)为金币所在格
                 # TODO 5:
                 # 如果(r,c)是陷阱位置
                 # 将通道2的对应位置设为1
-                if tuple(r,c)==self.traps:
-                    o(2,r,c)=1 # 表示视野内的(i,j)为陷阱位置
-                pass
+                if (r, c) in self.traps:
+                    o[2, i, j] = 1  # 表示视野内的(i,j)为陷阱位置
         # 4. 展平为一维数组
         # 将 NumPy 数组 o 展平成一维数组，然后将结果返回
         # reshape(-1)：自动计算长度并展平成一维
