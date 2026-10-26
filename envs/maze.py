@@ -22,14 +22,14 @@ class CoinMaze:
             self.walls[r,c]=1
         
         # 4. 金币候选位置
-        self.coin_cands=[(7,7),(0,7),[7,0],[3,4]]
+        self.coin_cands=[(7,7),(0,7),(7,0),(3,4)]
         # 5. 陷阱候选位置
         self.trap_cands=[(2,2),(2,5),(5,2),(5,6),(6,4),(3,6)]
         
         # TODE 2:
         # 创建智能体初始位置 self.pos
         # 使用np.array,位置为(0,1=0)
-        self.pos=(0,0)
+        self.pos=np.array([0,0])
         
         # TODE 3:
         # 初始化一下下三个状态变量
