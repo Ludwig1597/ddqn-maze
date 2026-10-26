@@ -129,3 +129,66 @@ class CoinMaze:
         # TODO 3:
         # 否则返回 True
         return True
+
+    # 实现 CoinMaze.obs()，将迷宫的局部信息转换为一个 75 维 NumPy 向量，为后续 DQN 神经网络提供输入。
+    # 现在的 CoinMaze 已经能够保存完整地图、移动智能体、计算奖励。
+    # 但智能体还没有一个标准化的方式来观察环境。（observe）
+    # 假设智能体位于 (3,3)，需要回答：
+    # - 上方能不能通行？
+    # - 右边是不是陷阱？
+    # - 附近有没有金币？
+    # obs() 的作用就是把这些信息编码成数字。
+    # 采用“局部视野多通道” observation shape=(3,5,5)
+    # 即三个通道，每个通道为 5×5 的局部视野。
+    # 三个通道分别表示：
+    # 通道	      内容	     取值
+    # Channel 0	 可通行区域	 1=可通行，0=墙或越界
+    # Channel 1	 金币位置	 1=金币，0=其他
+    # Channel 2	 陷阱位置	 1=陷阱，0=其他
+
+    # 然后将三个 5×5 数组展平：3x5x5=75
+    # 这样，我们之后的 QNet 就可以接收一个 75 维的状态向量。
+    # 不管智能体当前位于地图哪里，在观测数组中，智能体自己始终位于中心位置
+    # 坐标如何转换？设智能体当前全局位置为：r0, c0 = self.pos
+    # 局部视野中的索引 i, j 范围是 0～4。
+    # r=r0+i-2; c=c0+j-2
+    def obs(self):
+        K = 2  # 视野半径
+
+        # 1. 创建 3x5x5的观测数组
+        # o 是准备提供给 DDQN 神经网络的 Observation（观测），所以使用 np.float32 更合适
+        o = np.zeros((3, 2 * K + 1, 2 * K + 1), dtype=np.float32)
+        # 2. 当前智能体的全局位置
+        r0, c0 = self.pos
+        # 3. 遍历局部视野
+        for i in range(2 * K + 1):
+            for j in range(2 * K + 1):
+                # TODO 1:
+                # 将局部坐标(i,j)转换成全局坐标(r,c)
+                r = r0 + i - 2
+                c = c0 + j - 2
+
+                # TODO 2:
+                # 如果(r,c)不可通行，跳过本次循环
+                # 提示：self._free(r,c)和continue
+                if not self._free(r,c):
+                    continue
+
+                # TODO 3:
+                # 可通行区域：通道0的对应位置设为1
+                o[0,r,c]=1 # 表示视野内的(i,j)可以通行
+                # TODO 4:
+                # 如果(r,c)是金币位置
+                # 将通道1的对应位置设为1
+                if tuple(r,c)==self.coin:
+                    o(1,r,c)=1 # 表示视野内的(i,j)为金币所在格
+                # TODO 5:
+                # 如果(r,c)是陷阱位置
+                # 将通道2的对应位置设为1
+                if tuple(r,c)==self.traps:
+                    o(2,r,c)=1 # 表示视野内的(i,j)为陷阱位置
+                pass
+        # 4. 展平为一维数组
+        # 将 NumPy 数组 o 展平成一维数组，然后将结果返回
+        # reshape(-1)：自动计算长度并展平成一维
+        return o.reshape(-1)
