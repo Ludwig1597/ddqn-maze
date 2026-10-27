@@ -30,7 +30,7 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 > 本次先不实现 reset()、step() 和 75 维观测编码。  
 > 完成初始化并通过测试后，再进入这些方法。
 
-### 实践 02: 实现 reset() 方法
+### 实践 02：实现 reset() 方法
 
 **对应课程设计：第 6–7 页，第 2.4 节**：阅读清单 1 中的 reset() 方法。
 

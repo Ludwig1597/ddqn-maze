@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-
+# QNet：负责根据状态预测动作价值 Q(s,a)，它有需要训练的神经网络参数。
 class QNet(nn.Module):
     def __init__(self, obs_dim=75, n_act=4, hidden=128):
         # 因为QNet继承了nn.Module，因此需要super().__init__(),执行父类的初始化方法。
