@@ -85,3 +85,12 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 **本阶段目标**：独立实现能够存储与随机抽取经验的 Replay Buffer。暂时不执行 BP。
 
 > 需要了解： deque、random.sample()、zip(*batch)、数组复制和 Batch 维度。
+
+### 实践 07：计算 Double DQN 的 TD Target
+
+**课程设计：第 11–13 页，第 5.3–5.4 节**：重点阅读第 12–13 页的 清单 4：DDQN 目标值计算。
+
+**本阶段目标**： 创建 Online Network 和 Target Network，实现 DDQN 的目标 Q 值计算。
+
+> 需要了解： argmax()、gather()、torch.no_grad()、Batch 维度与手工数值测试。
+> 本阶段先不进行 BP。下一阶段会把 TD Target 接入 Huber Loss 和优化器。
