@@ -92,5 +92,12 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 
 **本阶段目标**： 创建 Online Network 和 Target Network，实现 DDQN 的目标 Q 值计算。
 
+- 创建 online 和 target 两个 QNet
+- 使用 load_state_dict() 同步初始化参数
+- 实现 argmax() 选择动作
+- 实现 gather() 评价动作
+- 正确计算 done 掩码和 TD Target
+- 通过手工数值测试
+
 > 需要了解： argmax()、gather()、torch.no_grad()、Batch 维度与手工数值测试。
 > 本阶段先不进行 BP。下一阶段会把 TD Target 接入 Huber Loss 和优化器。

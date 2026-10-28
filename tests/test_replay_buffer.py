@@ -1,7 +1,7 @@
 import numpy as np
-from agents.ddqn import Replaybuffer
+from agents.ddqn import ReplayBuffer
 
-buf = Replaybuffer(capacity=100)
+buf = ReplayBuffer(capacity=100)
 
 # 手工创建80条模拟数据
 for i in range(80):
