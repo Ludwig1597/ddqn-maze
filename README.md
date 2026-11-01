@@ -101,3 +101,13 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 
 > 需要了解： argmax()、gather()、torch.no_grad()、Batch 维度与手工数值测试。
 > 本阶段先不进行 BP。下一阶段会把 TD Target 接入 Huber Loss 和优化器。
+
+### 实践 08：第一次真正执行 DDQN 的 BP 更新
+
+**课程设计：第 13–15 页**：重点阅读： 第 6.1 节训练主循环的第 5–10 步，以及第 6.2 节的优化器、损失函数与梯度裁剪配置。
+
+**本阶段目标**： 从 Replay Buffer 取出一批经验，计算预测 Q 值与 TD Target 的 Huber Loss，并让 Online QNet 更新一次参数。
+
+![流程](./doc/img/flow.png)
+
+> 需要了解： torch.as_tensor()、Batch 维度、SmoothL1Loss、梯度裁剪和检查参数是否真的改变。

@@ -3,6 +3,7 @@
     "python-envs.defaultPackageManager": "ms-python.python:conda",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.tabCompletion": "on"
     }
 }

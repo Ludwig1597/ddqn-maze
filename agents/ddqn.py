@@ -83,8 +83,16 @@ DDQN (Double Deep Q-Network)
 
 
 class DDQNAgent:
-    def __init__(self, gamma=0.95):
+    # lr: learning rate学习率，lr = 1e-3=0.001
+    # batch_size: 每次从 Buffer 抽取的经验数量
+    # warmup: 预热阶段，在 Replay Buffer 中积累至少 1000 条经验之后，才开始训练 QNet。
+    # 每走一步，智能体会产生一条经验: (s,a,r,s',done)
+    def __init__(self, gamma=0.95, lr=1e-3, batch_size=64, warmup=1000):
         self.gamma = gamma
+        self.batch_size = batch_size
+        self.warmup = warmup
+        # 经验回放池
+        self.buf = ReplayBuffer(capacity=50_000)
 
         # TODO 1:
         # 创建Online QNet和Target QNet
@@ -95,6 +103,14 @@ class DDQNAgent:
         # 目标：让 Online 的预测接近 TD Target
         self.online = QNet()
         self.target = QNet()
+
+        # 只优化Online Network
+        # 这表示使用 Adam 优化器更新 Online QNet 的参数，学习率设置为 0.001。
+        # Target Network 不通过 BP 学习
+        # Online Network：负责选择下一状态 (s') 下 Q 值最大的 Action。
+        # Target Network：负责计算这个 Action 对应的 Q 值，用于构造 TD Target。
+        # 注意：Adam 的实际参数更新不完全等同于上面的普通梯度下降公式，因为它还会根据梯度的一阶、二阶矩估计调整更新量。
+        self.optimizer = torch.optim.Adam(self.online.parameters(), lr=lr)
 
         # TODO 2:
         # 将online的初始参数复制到target
@@ -171,3 +187,86 @@ class DDQNAgent:
         td_target = rewards + self.gamma * (1 - dones) * selected_q
 
         return td_target
+
+    """_summary_
+    DDQN: 一次update的完整流程
+    Replay Buffer: 随机采样64条经验 (s,a,r,s',d)
+        Online QNet预测Q(s,a) # (64,)
+        DDQN Target: Online选动作, Target评估 # (64,)
+    Smooth L1 Loss: 比较 Q Pred 和 TD Target, 得到标量 Loss
+    Backward(反向传播) → Gradient Clipping(裁剪梯度) → Adam Step(更新 Online 参数)
+    return loss.item(): 返回 Python 浮点数，用于记录训练 Loss
+    """
+
+    def update(self):
+        # 1. 经验不足1000条，暂时不训练
+        if len(self.buf) < self.warmup:
+            return None
+
+        # 2. 从Replay Buffer随机抽取一个Batch
+        s, a, r, s2, d = self.buf.sample(self.batch_size)
+
+        # 3. NumPy->PyTorch Tensor
+        # 把变量 s 转换成 PyTorch 的 Tensor（张量），并指定数据类型为 float32。
+        states = torch.as_tensor(s, dtype=torch.float32)
+        # unsqueeze(1) 并没有增加数据，只是增加一个维度。
+        # unsqueeze(0)：(3,) → (1, 3)
+        # unsqueeze(1)：(3,) → (3, 1)
+        actions = torch.as_tensor(a, dtype=torch.int64).unsqueeze(1)
+        rewards = torch.as_tensor(r, dtype=torch.float32)
+        next_states = torch.as_tensor(s2, dtype=torch.float32)
+        dones = torch.as_tensor(d, dtype=torch.float32)
+
+        # 4. Online网络预测当前状态的全部Q值
+        # states 不是传给 __init__() 的，而是传给 forward() 的
+        q_values = self.online(states)
+
+        # TODO 1:
+        # q_values	(64, 4)	64 条经验，每条有 4 个动作的 Q 值
+        # actions	(64, 1)	64 条经验，每条实际执行的动作编号
+        # 根据actions使用gather()
+        # 取得实际执行动作对应的Q值
+        # 最终形状应该是(64,)
+        # tensor.gather(dim, index)
+        # dim=1：沿着列方向提取。
+        # index=actions：使用实际执行的动作编号作为索引。
+        q_selected = q_values.gather(1, actions)  # q_selected.shape  # (64, 1)
+        q_selected = q_selected.squeeze(1)  # 可以删除第 1 维,最终形状为 (64,)
+
+        # TODO 2:
+        # 调用之前实现的computer_target()
+        # 得到TD Target，形状(64,)
+        td_target = self.compute_target(rewards, next_states, dones)
+
+        # TODO 3:
+        # 使用torch.nn.functional.smooth_l1_loss()
+        # 计算预测Q值与TD Target的损失
+        # F.smooth_l1_loss(input, target)
+        # input：神经网络的预测值。
+        # target：希望神经网络接近的目标值。
+        # 当 TD Error 很大时，MSE 会迅速增大，而 Smooth L1 增长得更平缓。
+        # 在强化学习中，TD Target 会随着网络学习不断变化，有时预测误差会比较大，因此 Smooth L1 通常能让训练更稳定。
+        loss = torch.nn.functional.smooth_l1_loss(q_selected, td_target)
+
+        # 5. 清空历史梯度
+        self.optimizer.zero_grad()
+
+        # TODO 4:
+        # 对Loss执行反向传播
+        loss.backward()
+
+        # TODO 5:
+        # 使用torch.nn.utils.clip_grad_norm_()
+        # 将online网络梯度的L2范数上限设置为10
+        # 梯度裁剪不是把每个梯度都限制在 -10 到 10，而是限制所有参数梯度组合起来的整体 L2 范数。
+        # torch.nn.utils.clip_grad_norm_(parameters, max_norm)
+        # parameters：你希望裁剪哪些网络参数的梯度。
+        # max_norm：允许的最大梯度范数，题目要求为 10。
+        # self.online.parameters() 获取 Online Network 的可学习参数，函数会读取这些参数已经计算出的梯度并进行裁剪。
+        # 这里的默认 norm_type=2.0 就是 L2 范数，因此不需要额外设置。
+        torch.nn.utils.clip_grad_norm_(self.online.parameters(), max_norm=10.0)
+
+        # TODO 6:
+        # 使用Adam更新Online参数
+        self.optimizer.step()
+        return loss.item()
