@@ -135,3 +135,13 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 **本次任务**： 实现一个同步方法，并验证 Target 的参数不会随 Online 的 BP 自动改变。
 
 > 需要了解： state_dict()、load_state_dict() 与模型参数独立性的测试。
+
+### 实践 11-1：编写 DDQN 训练主循环
+
+**课程设计第 14–15 页 · 第 6.1–6.2 节**: 请先阅读： 第 14 页清单 5「训练主循环骨架」以及第 15 页表 9「DDQN 训练超参数基线配置」。
+
+**作业原文要求**： 训练 2000 个 Episode，ε 从 1.0 线性下降至 0.05，每 500 个全局环境步同步 Target，每 50 回合独立评估。
+
+**本轮目标**： 先完成训练循环，试运行 10 个 Episode，确认组件能够正确连接。
+
+**额外补充**： 线性衰减函数、全局环境步数、训练冒烟测试（Smoke Test）。
