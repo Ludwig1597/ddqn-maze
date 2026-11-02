@@ -111,3 +111,12 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 ![流程](./doc/img/flow.png)
 
 > 需要了解： torch.as_tensor()、Batch 维度、SmoothL1Loss、梯度裁剪和检查参数是否真的改变。
+
+### 实践 09：实现 ε-greedy 动作选择
+**课程设计：第 14–16 页**: 建议阅读： 第 6.1 节第 3 步「选择动作」，以及第 6.3 节「探索策略与参数敏感性」。
+
+**作业原文要求**： 使用 ε-greedy 策略，ε 从 1.0 线性下降到 0.05，衰减过程为 20,000 个全局环境步。
+
+**本阶段目标**： 实现 agent.act(state, epsilon)，使智能体能够选择动作。
+
+> 需要了解： Exploitation 与 Exploration、unsqueeze(0)、torch.no_grad()、动作选择的测试。

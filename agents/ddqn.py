@@ -270,3 +270,43 @@ class DDQNAgent:
         # 使用Adam更新Online参数
         self.optimizer.step()
         return loss.item()
+
+    """为什么要实现 agent.act(state, epsilon)，使智能体能够选择动作？
+    如果智能体始终选择当前 Q 值最大的动作，就可能过早陷入错误策略。
+    因为训练早期的网络参数是随机初始化的，其 Q 值并不可靠。
+    这就是为什么需要 ε-greedy。
+    a_t:
+        概率ε: Random Action(随机探索 Exploration)
+        概率1-ε: argmax_a Q_theta(s_t,a) (贪心利用 Exploitation)
+    而课程设计规定，训练初期：ε=1.0 智能体完全随机探索。
+    随着训练推进，ε 逐步下降，最终保留 0.05 的随机探索概率。
+    """
+
+    def act(self, state, epsilon):
+        # TODO 1: 探索（exploration）
+        # 生成一个[0,1)范围的随机数
+        # 若随机数 < epsilon, 则随机返回0-3中的动作
+        # np.random.random()，会生成一个 [0, 1) 范围内的随机浮点数。
+        # np.random.randint(4)	生成 [0,4) 的随机整数
+        # np.random.uniform(2,5)	生成 [2,5) 的随机浮点数
+        if np.random.random() < epsilon:
+            return np.random.randint(4)
+
+        # TODO 2: 利用（exploitation）
+        # 将NumPy状态转换为float32 Tensor
+        # state原本为(75,)
+        # 转换成(1,75)
+        state_tensor = torch.as_tensor(state, dtype=torch.float32).unsqueeze(0)
+
+        # TODO 3:
+        # 不记录梯度，调用self.online预测四个Q值
+        # 选择Q值最大的动作
+        # 最终返回Python int类型
+        # (1,75)->QNet->(1,4)->argmax(1,)->item->int
+        # 在 act() 中调用 Online 网络只为了选动作，不需要执行 BP，因此可以使用 torch.no_grad()。
+        with torch.no_grad():
+            q_values = self.online(state_tensor)
+            # 选择最大 Q 值对应的动作编号。
+            action = q_values.argmax(dim=1).item()
+
+        return action
