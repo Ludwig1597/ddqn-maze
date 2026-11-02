@@ -310,3 +310,28 @@ class DDQNAgent:
             action = q_values.argmax(dim=1).item()
 
         return action
+
+    """为什么不每次都同步？
+    因为 TD Target 本身包含下一状态的价值预测。如果用于计算目标值的网络参数每一步都跟着变化，训练目标就会持续移动，使训练更加不稳定。
+    所以 Target Network 在两次同步之间保持参数固定，提供一个相对稳定的目标。
+    """
+
+    def sync_target(self):
+        # TODO 1:
+        # 将Online Network的参数
+        # 完整复制给Target Network
+
+        # 提示：
+        # self.online.state_dict()
+        # self.target.load_state_dict(...)
+
+        # 将online的初始参数复制到target
+        # 提示：load_state_dict()和state_dict()
+        # state_dict() 的意思是：获取模型的状态字典。
+        # 这个字典保存了神经网络的权重、偏置等参数，以及某些层的持久状态。
+        params = self.online.state_dict()
+        # 两个网络分别随机初始化，因此初始参数通常不同。
+        # 把字典中的参数值加载到 Target 网络对应的参数中。
+        # Online QNet参数更新方式：优化器更新（执行BP）
+        # Target QNet参数更新方式：定期从 Online 同步
+        self.target.load_state_dict(params)

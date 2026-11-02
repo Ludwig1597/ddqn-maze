@@ -120,3 +120,18 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 **本阶段目标**： 实现 agent.act(state, epsilon)，使智能体能够选择动作。
 
 > 需要了解： Exploitation 与 Exploration、unsqueeze(0)、torch.no_grad()、动作选择的测试。
+
+目前已经完成了 DDQN Agent 的三个重要能力：
+- **预测 Q 值**：使用 Online QNet 预测四个动作的价值。
+- **探索与利用**：通过 ε-greedy 在随机探索和贪心动作之间切换。
+- **环境交互**：选择的动作可以交给 CoinMaze.step() 执行。
+
+### 实践 10：Target Network 周期同步
+
+**课程设计：第 13–15 页**：建议先读： 第 6.1 节「训练主循环」第 9–10 步，以及第 6.2 节中的目标网络配置。
+
+**作业原文要求**： 每隔 500 个全局环境步，将 Online Network 的参数复制到 Target Network（Hard Update）。
+
+**本次任务**： 实现一个同步方法，并验证 Target 的参数不会随 Online 的 BP 自动改变。
+
+> 需要了解： state_dict()、load_state_dict() 与模型参数独立性的测试。
