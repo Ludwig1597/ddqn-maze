@@ -212,3 +212,47 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 - **DDQN Greedy**： 没有进入陷阱，却有 171 个回合达到 200 步上限。
 
 也就是说，DDQN 很可能形成了一种比较保守的策略：它不去危险区域，但也没有积极找到金币。
+
+### 实践 12.4：追踪 DDQN 的失败路径
+
+**课程设计：第 16 页，第 6.4 节；第 17 页，第 7.1 节**
+
+**文档要求**： 对训练失败、Q 值异常、策略表现不佳等情况进行诊断，并在报告中分析原因。
+
+**本次目标**： 找到一个超时回合，观察智能体到底在做什么。
+
+> 额外补充： 记录单个 Episode 的智能体位置轨迹，判断是重复撞墙还是形成移动循环。
+
+```
+===== Timeout Diagnosis =====
+Episode: 2
+Coin position: (7, 7)
+Trap positions: {(2, 5), (5, 6), (2, 2)}
+Unique positions: 6
+Blocked steps: 0
+Most visited positions: [((np.int64(1), np.int64(3)), 99), ((np.int64(2), np.int64(3)), 98), ((np.int64(0), np.int64(0)), 1), ((np.int64(0), np.int64(1)), 1), ((np.int64(0), np.int64(2)), 1)]
+First 20 positions: [(np.int64(0), np.int64(0)), (np.int64(0), np.int64(1)), (np.int64(0), np.int64(2)), (np.int64(0), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3))]
+Last 20 positions: [(np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.int64(2), np.int64(3)), (np.int64(1), np.int64(3))]
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
+
+![alt text](/doc/img/12-4failanalysis.png)
+![alt text](/doc/img/12-4failmap.png)
+
+这里可以得出两个有依据的结论：
+1. 它没有因为撞墙而超时。 Blocked steps = 0，说明动作都产生了位置变化。
+2. 它形成了确定性的循环策略。 在 (1,3) 选择向下（动作 1），在 (2,3) 选择向上（动作 0），不断重复。   
+
+之前我们观察到 DDQN 的陷阱率为 0%，现在必须更加谨慎：它可能并非真正学会了避开陷阱，而只是反复停留在一小片安全区域。
+
+**为什么会出现这种循环？**
+目前有两个主要假设。
+**假设 A：训练还不充分。**
+你的模型只训练了 50 个 Episode、2939 个环境步，而课程设计要求的基线训练规模是 2000 个 Episode。
+
+当前 ε 还在较高水平，Online Network 的学习远未充分。我们不能因为早期策略有问题就直接判定算法失败。
+
+**假设 B：75 维局部观测的信息不足。**
+你现在的金币位于 (7,7)。
+当智能体处于 (1,3) 或 (2,3) 时，金币都不在其 5×5 局部视野内。
+因此 QNet 无法直接从当前观测中知道金币的方向，也没有显式的历史记忆。这可能促成重复决策。
