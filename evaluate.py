@@ -9,6 +9,13 @@ def evaluate(agent, episodes=20, seed=999, epsilon=0.0):
     returns = []
     successes = []
     steps_list = []
+    # fmt:off
+    outcomes={
+        "coin":0,
+        "trap":0,
+        "timeout":0
+    }
+    # fmt:on
 
     for ep in range(episodes):
         state = env.reset()
@@ -33,6 +40,15 @@ def evaluate(agent, episodes=20, seed=999, epsilon=0.0):
 
         # 是否找到金币
         success = int(tuple(env.pos) == env.coin)
+        if success:
+            # TODO 1: 金币成功次数+1
+            outcomes["coin"]+=1
+        elif tuple(env.pos) in env.traps:
+            # TODO 2: 陷阱终止次数+1
+            outcomes["trap"]+=1
+        else:
+            # TODO 3: 步数超时次数+1
+            outcomes["timeout"]+=1
 
         returns.append(ep_return)
         successes.append(success)
@@ -49,4 +65,5 @@ def evaluate(agent, episodes=20, seed=999, epsilon=0.0):
         "success_rate": float(np.mean(successes)),
         "avg_return": float(np.mean(returns)),
         "avg_steps": float(np.mean(steps_list)),
+        "outcomes": outcomes
     }

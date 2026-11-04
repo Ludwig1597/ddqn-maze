@@ -8,9 +8,13 @@ def main():
 
     # 实验A：完全随机策略
     random_result = evaluate(agent, episodes=200, seed=999, epsilon=1.0)
+    assert sum(random_result["outcomes"].values()) == 200
+    assert random_result["outcomes"]["coin"] / 200 == random_result["success_rate"]
 
     # 实验B：训练后的贪心策略
     greedy_reuslt = evaluate(agent, episodes=200, seed=999, epsilon=0.0)
+    assert sum(greedy_reuslt["outcomes"].values()) == 200
+    assert greedy_reuslt["outcomes"]["coin"] / 200 == greedy_reuslt["success_rate"]
 
     print("\n===== Random Policy =====")
     print(random_result)
