@@ -156,7 +156,7 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 
 > 当前文件： train.py
 
-### 实践 12，独立评估 DDQN
+### 实践 12-1，独立评估 DDQN
 
 **课程设计：第 16–18 页，第 7.1–7.2 节**: 阅读： 第 17–18 页关于评估指标与评估协议的内容。
 
@@ -169,3 +169,13 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 
 > 额外补充： 先实现一个小规模独立评估函数，通过测试后再接入正式训练。
 > python -c "from agents.ddqn import DDQNAgent; from evaluate import evaluate; print(evaluate(DDQNAgent(), episodes=20))"
+
+### 实践 12.2：加入随机策略基准，对比 DDQN 是否真正学到了东西
+
+**课程设计: 第 7 页及第 16–18 页**
+
+**原文要求**： 环境需要进行随机策略基准自检；训练策略需要独立评估。
+
+**本次目标**： 在相同的环境配置和评估回合数下，对比 Random Policy 与训练后的 Greedy Policy。
+
+> 额外补充： 对照实验的控制变量思想，以及较大评估样本量的意义。
