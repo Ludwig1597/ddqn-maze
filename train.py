@@ -35,6 +35,9 @@ def train(n_episodes=10, seed=0):
     agent = DDQNAgent()
 
     global_steps = 0
+    update_count = 0  # 发生多少次真正的梯度更新
+    sync_count = 0  # Target Network同步了多少次
+    success_count = 0  # 有多少个Episode找到金币
 
     for ep in range(n_episodes):
         state = env.reset()
@@ -63,6 +66,10 @@ def train(n_episodes=10, seed=0):
 
             # 执行一次学习更新
             loss = agent.update()
+            # update()在预热阶段，此时没有执行BP
+            # 在经验足够以后，它会返回实际的Huber Loss
+            if loss is not None:
+                update_count += 1
 
             # 增加全局环境步数
             global_steps += 1
@@ -71,13 +78,15 @@ def train(n_episodes=10, seed=0):
             # 每500个全局环境步同步Target
             if global_steps % 500 == 0:
                 agent.sync_target()
-
+                sync_count += 1  # 记录 Target 同步次数
             # TODO 5:
             # 更新state和ep_return
             # ep_return 表示 Episode Return（单回合累计奖励）
             state = next_state
             ep_return += reward
 
+        success = int(tuple(env.pos) == env.coin)  # 通过环境终局位置判断是否到达金币
+        success_count += success
         print(
             # 3	最小显示宽度为 3 个字符
             # d	Decimal，表示十进制整数
@@ -89,6 +98,11 @@ def train(n_episodes=10, seed=0):
             f"Global steps:{global_steps}"
         )
 
+        print("\n===== Training Summary =====")
+        print("Environment steps:", global_steps)
+        print("Gradient updates:", update_count)
+        print("Target synchronizations:", sync_count)
+        print("Successful episodes:", success_count)
     return agent
 
 
