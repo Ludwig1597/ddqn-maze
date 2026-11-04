@@ -155,3 +155,17 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 **额外补充**： 为训练代码增加调试计数器，确认梯度更新确实执行，而不仅是调用了 update()。
 
 > 当前文件： train.py
+
+### 实践 12，独立评估 DDQN
+
+**课程设计：第 16–18 页，第 7.1–7.2 节**: 阅读： 第 17–18 页关于评估指标与评估协议的内容。
+
+**课程要求**：
+- 每隔 50 个训练回合，使用 epsilon=0 评估。
+- 评估过程中不允许写入 Replay Buffer。
+- 最终使用固定的评估设置比较 DQN 和 DDQN。
+
+**本阶段目标**： 区分「训练时靠探索找到金币」和「网络真正学会找到金币」。
+
+> 额外补充： 先实现一个小规模独立评估函数，通过测试后再接入正式训练。
+> python -c "from agents.ddqn import DDQNAgent; from evaluate import evaluate; print(evaluate(DDQNAgent(), episodes=20))"
