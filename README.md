@@ -203,3 +203,12 @@ A course project for Deep Reinforcement Learning at Fudan University, applying D
 **本次目标**： 搞清楚 DDQN 的平均步数为什么如此高。
 
 > 额外补充： 将失败情况进一步分成金币成功、陷阱终止、步数超时三类。
+
+**结果**：
+![alt text](/doc/img/12-3comparison.png)
+
+这组数据揭示了两种截然不同的失败方式。
+- **Random Policy**： 大多数回合因进入陷阱而结束。
+- **DDQN Greedy**： 没有进入陷阱，却有 171 个回合达到 200 步上限。
+
+也就是说，DDQN 很可能形成了一种比较保守的策略：它不去危险区域，但也没有积极找到金币。
