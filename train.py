@@ -1,6 +1,10 @@
 import random
 import numpy as np
 import torch
+import csv
+
+# 从 Python 标准库的 pathlib 模块中，导入 Path 类，用来操作文件和文件夹路径。
+from pathlib import Path
 
 from envs.maze import CoinMaze
 from agents.ddqn import DDQNAgent
@@ -38,12 +42,14 @@ def train(n_episodes=10, seed=0):
     update_count = 0  # 发生多少次真正的梯度更新
     sync_count = 0  # Target Network同步了多少次
     success_count = 0  # 有多少个Episode找到金币
+    episode_logs = []
 
     for ep in range(n_episodes):
         state = env.reset()
         done = False
         ep_return = 0.0
         ep_steps = 0
+        ep_losses = []
 
         while not done:
             eps = epsilon_schedule(global_steps)
@@ -70,6 +76,7 @@ def train(n_episodes=10, seed=0):
             # 在经验足够以后，它会返回实际的Huber Loss
             if loss is not None:
                 update_count += 1
+                ep_losses.append(loss)
 
             # 增加全局环境步数
             global_steps += 1
@@ -87,6 +94,24 @@ def train(n_episodes=10, seed=0):
 
         success = int(tuple(env.pos) == env.coin)  # 通过环境终局位置判断是否到达金币
         success_count += success
+
+        # 本回合平均Loss
+        # len()：计算元素数量。
+        avg_loss = sum(ep_losses) / len(ep_losses) if ep_losses else None
+
+        # TODO 1:
+        # 向episode_logs添加一个字典
+        # 记录下面六个字段
+        episode_logs.append(
+            {
+                "episode": ep + 1,
+                "return": ep_return,
+                "success": success,
+                "steps": ep_steps,
+                "epsilon": eps,
+                "loss": avg_loss,
+            }
+        )
         print(
             # 3	最小显示宽度为 3 个字符
             # d	Decimal，表示十进制整数
@@ -103,6 +128,39 @@ def train(n_episodes=10, seed=0):
         print("Gradient updates:", update_count)
         print("Target synchronizations:", sync_count)
         print("Successful episodes:", success_count)
+    # logs/ddqn_seed0.csv
+    log_path = Path("logs") / f"ddqn_seed{seed}.csv"
+    # parents=True	如果上级目录不存在，也自动创建
+    # exist_ok=True	如果文件夹已经存在，不要报错
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    # fmt:off
+    # ewline=""	让 CSV 模块自行处理换行
+    # with	自动管理文件的打开和关闭
+    # as f	把打开的文件对象赋给变量 f
+    # 使用 "w"，意味着每次运行训练脚本，同一路径下原来的 CSV 内容会被覆盖。
+    with log_path.open("w",newline="",encoding="utf-8") as f:
+        # csv.DictWriter 就是专门将 Python 字典写入 CSV 文件的工具。
+        # fieldnames=[]指出CSV 文件的六个列名，以及列的排列顺序。
+        writer=csv.DictWriter(
+            f,
+            fieldnames=[
+                "episode",
+                "return",
+                "success",
+                "steps",
+                "epsilon",
+                "loss"
+            ]
+        )
+        # fmt:on
+        # TODO 2:
+        # 写入csv表头
+        # 作用是写入第一行：episode,return,success,steps,epsilon,loss
+        writer.writeheader()
+        # TODO 3:
+        # 把episode_logs中的记录全部写入文件
+        writer.writerows(episode_logs)
+
     return agent
 
 
