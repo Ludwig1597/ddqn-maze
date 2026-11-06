@@ -44,6 +44,7 @@ def train(n_episodes=10, seed=0):
     sync_count = 0  # Target Network同步了多少次
     success_count = 0  # 有多少个Episode找到金币
     episode_logs = []
+    eval_logs = []  # 用于存储每隔 50 Episode 产生的一条评估记录。
 
     best_success_rate = -1.0
     # pt是pyTorch的缩写，通常用于保存神经网络参数
@@ -144,6 +145,23 @@ def train(n_episodes=10, seed=0):
             # 评估使用默认epsilon=0.0
             result = evaluate(agent, episodes=10, seed=999)
             success_rate = result["success_rate"]
+            # 14 TODO 1:
+            # 向 eval_logs 添加一个字典
+            # 包含四个字段：
+            #
+            # episode：ep + 1
+            # success_rate：result["success_rate"]
+            # avg_return：result["avg_return"]
+            # avg_steps：result["avg_steps"]
+
+            eval_logs.append(
+                {
+                    "episode": ep + 1,
+                    "success_rate": success_rate,
+                    "avg_return": result["avg_return"],
+                    "avg_steps": result["avg_steps"],
+                }
+            )
 
             # TODO 2:
             # 打印当前评估成功率
@@ -200,7 +218,20 @@ def train(n_episodes=10, seed=0):
         # TODO 3:
         # 把episode_logs中的记录全部写入文件
         writer.writerows(episode_logs)
-
+    # 评估CSV路径
+    eval_log_path=Path("logs")/f"ddqn_seed{seed}_eval.csv"
+    with eval_log_path.open("w",newline="",encoding="utf-8") as f:
+        writer=csv.DictWriter(
+            f,
+            fieldnames=[
+                "episode",
+                "success_rate",
+                "avg_return",
+                "avg_steps"
+            ]
+        )
+        writer.writeheader()
+        writer.writerows(eval_logs)
     return agent
 
 
