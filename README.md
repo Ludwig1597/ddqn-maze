@@ -341,3 +341,40 @@ Last 20 positions: [(np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.
 文档要求：随机策略跑 100 回合，成功率应显著低于 20%。
 
 希望确认：不学习、不使用神经网络，仅靠随机行动，不能轻易完成任务。
+
+#### 实践 15.2：Greedy Baseline（贪心基准策略）
+
+**课程设计第 7 页 · 第 2.4 节**: 第二项环境自检
+
+**作业原文要求**: 手写一个按照曼哈顿距离朝金币方向移动的贪心策略，运行 100 回合，成功率应达到 90% 以上。如果明显偏低，需要检查障碍布局是否封死通路。
+
+**本次目标**: 不使用神经网络，不进行训练，验证环境是否能够被一个简单策略解决。
+
+先理解：什么是曼哈顿距离？
+假设迷宫中：
+- 智能体当前位置：\(s=(1,2)\)
+- 金币位置：\(g=(4,5)\)
+曼哈顿距离（Manhattan Distance）：
+\[
+d(s,g)=|r_s-r_g|+|c_s-c_g|
+\]
+
+代入：
+\[
+d=|1-4|+|2-5|=6
+\]
+
+意思是：如果没有障碍物，至少需要移动 6 步才能到达金币。
+
+因此贪心策略的基本思想就是：每次选择一个能够让当前位置与金币之间的曼哈顿距离尽可能小的动作。
+
+为了让实验可复现，并使 90% 的环境可解性检查有意义，明确采用以下版本：
+- 使用 env.coin 获取金币全局位置。
+- 使用 env.walls 排除墙和越界位置。
+- 使用 env.traps 尽量排除陷阱。
+- 对剩余合法位置，选择曼哈顿距离最小的动作。
+- 如果多个动作距离相同，使用固定 seed 的随机数生成器打破平局。
+这是一个利用完整环境信息的贪心基准策略，属于环境可解性检查，不是与 DDQN 公平比较的算法基线。DDQN 仍然只能使用 75 维局部观测。
+
+> python -c "import numpy as np; from envs.maze import CoinMaze, MOVES; from scripts.check_greedy_policy import manhattan_distance, greedy_action; assert manhattan_distance((1,2),(4,5)) == 6; env=CoinMaze(seed=0); env.reset(); a=greedy_action(env,np.random.default_rng(1)); assert a in MOVES; dr,dc=MOVES[a]; p=(int(env.pos[0]+dr),int(env.pos[1]+dc)); assert env._free(*p) and p not in env.traps; print('Manhattan and Greedy Action tests PASSED!', 'action=',a,'next_pos=',p)"
+> Manhattan and Greedy Action tests PASSED! action= 1 next_pos= (1, 0)
