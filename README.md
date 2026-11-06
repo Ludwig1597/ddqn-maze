@@ -392,3 +392,36 @@ d=|1-4|+|2-5|=6
 可复现：同一 seed 连续两次 reset，金币与陷阱位置必须完全一致；固定 seed 的训练曲线应在两次运行中逐步重合（浮点误差允许极小差异）。
 > (deep-learning) jaden@Macbook-Pro ddqn-maze %python -m tests.test_reproducibility
 > Same seed reproducibility PASSED!
+>
+> python -c "from scripts.check_training_reproducibility import read_csv; from pathlib import Path; rows=read_csv(Path('logs/ddqn_seed0.csv')); print('Rows:',len(rows)); print('First row:',rows[0])"
+> 
+> Rows: 50
+> First row: {'episode': '1', 'return': '-0.4700000000000011', 'success': '1', 'steps': '86', 'epsilon': '0.9959625', 'loss': ''}
+>
+> python -m scripts.check_training_reproducibility
+>
+> ===== Data Summary =====
+> Run 1 training: 50
+> Run 2 training: 50
+> Run 1 evaluation: 1
+> Run 2 evaluation: 1
+>
+> python -m scripts.check_training_reproducibility
+>
+> ===== Training Reproducibility =====
+```
+episode: Match
+return: Match
+success: Match
+steps: Match
+epsilon: Match
+loss: Match
+
+===== Evaluation Reproducibility ======
+episode: Match
+success_rate: Match
+avg_return: Match
+avg_steps: Match
+
+Training reproducibility PASSED
+```
