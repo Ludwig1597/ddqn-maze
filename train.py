@@ -8,6 +8,7 @@ from pathlib import Path
 
 from envs.maze import CoinMaze
 from agents.ddqn import DDQNAgent
+from evaluate import evaluate
 
 
 # 探索率衰减函数
@@ -43,6 +44,11 @@ def train(n_episodes=10, seed=0):
     sync_count = 0  # Target Network同步了多少次
     success_count = 0  # 有多少个Episode找到金币
     episode_logs = []
+
+    best_success_rate = -1.0
+    # pt是pyTorch的缩写，通常用于保存神经网络参数
+    checkpoint_path = Path("checkpoints") / f"ddqn_seed{seed}_best.pt"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
     for ep in range(n_episodes):
         state = env.reset()
@@ -128,6 +134,40 @@ def train(n_episodes=10, seed=0):
         print("Gradient updates:", update_count)
         print("Target synchronizations:", sync_count)
         print("Successful episodes:", success_count)
+
+        # 每50Episode评估一次
+        if (ep + 1) % 50 == 0:
+            # TODO 1:
+            # 调用evaluate()
+            # 使用当前agent
+            # episodes=10，seed=999
+            # 评估使用默认epsilon=0.0
+            result = evaluate(agent, episodes=10, seed=999)
+            success_rate = result["success_rate"]
+
+            # TODO 2:
+            # 打印当前评估成功率
+            # 例如：Evaluation at episode 50: success_rate=0.200
+            # fmt:off
+            print(
+                f"Evaluation at episode {ep+1}: " 
+                f"success_rate={success_rate:.3f}"
+            )
+            # fmt:on
+            # TODO 3:
+            # 如果当前评估成功率大于best_success_rate:
+            # 1. 更新best_success_rate
+            # 2. 使用torch.save()保存checkpoint
+            if success_rate > best_success_rate:
+                best_success_rate = success_rate
+                checkpoint_data = {
+                    "episode": ep + 1,
+                    "seed": seed,
+                    "eval_success_rate": success_rate,
+                    "online_state_dict": agent.online.state_dict(),
+                }
+                torch.save(checkpoint_data, checkpoint_path)
+                print(f"New best model saved to: {checkpoint_path}")
     # logs/ddqn_seed0.csv
     log_path = Path("logs") / f"ddqn_seed{seed}.csv"
     # parents=True	如果上级目录不存在，也自动创建

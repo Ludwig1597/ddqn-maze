@@ -257,7 +257,7 @@ Last 20 positions: [(np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.
 当智能体处于 (1,3) 或 (2,3) 时，金币都不在其 5×5 局部视野内。
 因此 QNet 无法直接从当前观测中知道金币的方向，也没有显式的历史记忆。这可能促成重复决策。
 
-### 实践 13 · 训练日志
+### 实践 13-1：训练日志
 
 **课程设计第 14–17 页，第 6.1 节、第 7.1 节，以及第 20 页交付清单。**
 
@@ -267,4 +267,26 @@ Last 20 positions: [(np.int64(2), np.int64(3)), (np.int64(1), np.int64(3)), (np.
 
 > 额外补充： 使用 Python 的 csv 模块保存结构化日志。
 > python -c "from train import train; train(n_episodes=10, seed=0)"
+
+### 实践 13.2：定期评估与保存最佳模型
+
+**课程设计：第 14–18 页**：先阅读： 第 6.1 节训练流程的第 11–12 步，以及第 7.2 节评估协议。
+
+**作业原文要求**： 每 50 个 Episode 进行一次独立评估，评估时 ε=0，并保存评估成功率最高的模型。
+
+**本次目标**： 让训练程序自动评估当前 Agent，并保存最佳 QNet 权重。
+
+> 额外补充： torch.save()、Checkpoint（检查点）以及如何避免覆盖模型文件。
+> python -c "from train import train; train(n_episodes=50, seed=0)"
+> 
+> ls -lh checkpoints/
+> total 216
+> -rw-r--r--@ 1 jaden  staff   108K Nov  6 08:47 ddqn_seed0_best.pt
+> 
+> python -c "import torch; c=torch.load('checkpoints/ddqn_seed0_best.pt', map_location='cpu', weights_only=True); print('Episode:', c['episode']); print('Success rate:', c['eval_success_rate']); print('Parameter tensors:', len(c['online_state_dict']))"
+> Episode: 50
+> Success rate: 0.2
+> Parameter tensors: 6
+>
+> 现在不仅能训练 DDQN，还能自动评估、保存表现最好的网络，并重新读取模型文件。
 
