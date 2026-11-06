@@ -378,3 +378,17 @@ d=|1-4|+|2-5|=6
 
 > python -c "import numpy as np; from envs.maze import CoinMaze, MOVES; from scripts.check_greedy_policy import manhattan_distance, greedy_action; assert manhattan_distance((1,2),(4,5)) == 6; env=CoinMaze(seed=0); env.reset(); a=greedy_action(env,np.random.default_rng(1)); assert a in MOVES; dr,dc=MOVES[a]; p=(int(env.pos[0]+dr),int(env.pos[1]+dc)); assert env._free(*p) and p not in env.traps; print('Manhattan and Greedy Action tests PASSED!', 'action=',a,'next_pos=',p)"
 > Manhattan and Greedy Action tests PASSED! action= 1 next_pos= (1, 0)
+>
+> python -m scripts.check_greedy_policy     
+> ===== Greedy Policy Evaluation =====
+> {'success_rate': np.float64(1.0), 'avg_return': np.float64(0.9011999999999997), 'avg_steps': np.float64(10.88), 'outcomes': {'coin': 100, 'trap': 0, 'timeout': 0, 'stuck': 0}}
+
+#### 实践 15.3：环境可复现性（Reproducibility）
+
+第三项环境自检
+
+这一步是正式训练前最后一项环境自检。
+原文第 7 页，第 2.4 节的自检三：
+可复现：同一 seed 连续两次 reset，金币与陷阱位置必须完全一致；固定 seed 的训练曲线应在两次运行中逐步重合（浮点误差允许极小差异）。
+> (deep-learning) jaden@Macbook-Pro ddqn-maze %python -m tests.test_reproducibility
+> Same seed reproducibility PASSED!
