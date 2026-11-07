@@ -425,3 +425,70 @@ avg_steps: Match
 
 Training reproducibility PASSED
 ```
+
+### 实践 16：正式 DDQN 训练
+
+开始课程要求的 2000 Episode 训练实验。
+**文档第 14–15 页 · 第 6.1–6.2 节**
+
+**文档要求**：每个训练种子运行 2000 Episode，使用种子 0、1、2、3、4 进行统计，每隔 50 Episode 进行 10 次独立评估。DDQN实践项目设计(1).docx
+DDQN实践项目设计(1).docx
+
+本轮先只运行 seed=0。 确认长训练的日志、模型保存与评估曲线正常，再扩大到其他种子。
+
+先保持现有的基线超参数，不进行调参：
+|超参数|设置|
+|:-:|:-:|
+|Episode|2000|
+|Seed|0|
+|Learning Rate|0.001|
+|Gamma|0.95|
+|Batch Size|64|
+|Replay Buffer|50,000|
+|Warmup|1000|
+|Target Sync|500 步|
+|Epsilon|1.0 → 0.05|
+
+> Note: 模型参数是模型通过训练学出来的；超参数是我们用来指导模型如何学习的。
+
+开始2000回合的训练：
+> python -c "from train import train; train(n_episodes=2000, seed=0)"
+
+训练结束以后检查：
+统计训练日志 CSV 文件有多少行:
+> wc -l logs/ddqn_seed0.csv
+
+统计评估日志有多少行。
+> wc -l logs/ddqn_seed0_eval.csv
+
+查看评估日志最后 5 行内容。
+> tail -n 5 logs/ddqn_seed0_eval.csv
+
+查看保存的最佳 DDQN 模型文件是否存在，以及它的文件大小。
+> ls -lh checkpoints/ddqn_seed0_best.pt
+
+```
+Evaluation at episode 2000: success_rate=0.300
+
+===== Training Summary =====
+Environment steps: 161968
+Gradient updates: 160969
+Target synchronizations: 323
+Successful episodes: 1094
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/ddqn_seed0.csv
+    2001 logs/ddqn_seed0.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/ddqn_seed0_eval.csv
+      41 logs/ddqn_seed0_eval.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %tail -n 5 logs/ddqn_seed0_eval.csv
+1800,0.2,-1.8060000000000014,161.4
+1850,0.0,-2.000000000000001,200.0
+1900,0.2,-1.4120000000000013,161.4
+1950,0.1,-2.0970000000000013,181.4
+2000,0.3,-2.3010000000000015,142.8
+(deep-learning) jaden@Macbook-Pro ddqn-maze %ls -lh checkpoints/ddqn_seed0_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov  7 07:50 checkpoints/ddqn_seed0_best.pt
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
+Seed 0 的 2000 Episode 正式训练已经完成。  DDQN 项目从算法实现进入正式实验分析。
+
+

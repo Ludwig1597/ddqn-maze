@@ -130,12 +130,6 @@ def train(n_episodes=10, seed=0):
             f"Global steps:{global_steps}"
         )
 
-        print("\n===== Training Summary =====")
-        print("Environment steps:", global_steps)
-        print("Gradient updates:", update_count)
-        print("Target synchronizations:", sync_count)
-        print("Successful episodes:", success_count)
-
         # 每50Episode评估一次
         if (ep + 1) % 50 == 0:
             # TODO 1:
@@ -186,6 +180,12 @@ def train(n_episodes=10, seed=0):
                 }
                 torch.save(checkpoint_data, checkpoint_path)
                 print(f"New best model saved to: {checkpoint_path}")
+
+    print("\n===== Training Summary =====")
+    print("Environment steps:", global_steps)
+    print("Gradient updates:", update_count)
+    print("Target synchronizations:", sync_count)
+    print("Successful episodes:", success_count)
     # logs/ddqn_seed0.csv
     log_path = Path("logs") / f"ddqn_seed{seed}.csv"
     # parents=True	如果上级目录不存在，也自动创建
