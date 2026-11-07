@@ -491,4 +491,32 @@ Successful episodes: 1094
 ```
 Seed 0 的 2000 Episode 正式训练已经完成。  DDQN 项目从算法实现进入正式实验分析。
 
+### 实践 17：最佳模型的独立评估
 
+我们需要回答一个问题：  
+训练了 2000 Episode 后，DDQN 是否真的比随机策略更擅长寻找金币？
+
+1. 检查最佳checkpoint
+   > python -c "import torch; c=torch.load('checkpoints/ddqn_seed0_best.pt', map_location='cpu', weights_only=True); print('Best episode:',c['episode']); print('Best evaluation success rate:',c['eval_success_rate'])"
+   > 
+   > Best episode: 200
+   > Best evaluation success rate: 0.6
+2. Step 2：对最佳模型进行 100 Episode 独立评估
+   这次使用新的评估随机种子 2026，与训练 seed=0、周期评估 seed=999 区分开。
+   > python -m scripts.evaluate_checkpoint
+   ```
+   (deep-learning) jaden@Macbook-Pro ddqn-maze %python -m   scripts.evaluate_checkpoint
+    Checkpoint episode: 200
+    Best checkpoint rate: 0.6
+
+    ===== Independent Evaluation =====
+    {'success_rate': 0.26, 'avg_return': -1.2402000000000009, 'avg_steps': 150.28, 'outcomes': {'coin': 26, 'trap': 0,    'timeout': 74}}
+    (deep-learning) jaden@Macbook-Pro ddqn-maze %
+    ```
+3. 分析
+   74% 的测试回合都没有找到金币。这说明当前策略可能存在以下问题：
+   - 在局部区域反复移动。
+   - 无法有效规划到远处金币的路线。
+   - 对局部观测中的障碍布局理解不足。
+   - Q 值估计使智能体偏向某些安全但没有进展的动作。
+   
