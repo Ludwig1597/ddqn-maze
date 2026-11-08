@@ -513,10 +513,46 @@ Seed 0 的 2000 Episode 正式训练已经完成。  DDQN 项目从算法实现�
     {'success_rate': 0.26, 'avg_return': -1.2402000000000009, 'avg_steps': 150.28, 'outcomes': {'coin': 26, 'trap': 0,    'timeout': 74}}
     (deep-learning) jaden@Macbook-Pro ddqn-maze %
     ```
-3. 分析
+3. 分析   
    74% 的测试回合都没有找到金币。这说明当前策略可能存在以下问题：
    - 在局部区域反复移动。
    - 无法有效规划到远处金币的路线。
    - 对局部观测中的障碍布局理解不足。
    - Q 值估计使智能体偏向某些安全但没有进展的动作。
    
+#### 实践 17.1：诊断 DDQN 为什么超时
+
+**先弄清楚一个问题**：DDQN 是真的在规划路线，还是在两个位置之间循环？
+**实践目标**：
+- 加载 Seed 0 的最佳模型（Episode 200）。
+- 使用 seed=2026 进行确定性策略评估。
+- 找到第一个超时的 Episode。
+- 记录智能体每一步的位置。
+- 判断是否存在原地徘徊或两个格子之间循环的现象。Episode，并记录：
+
+|指标|目的|
+|:-:|:-:|
+|Coin position|金币在哪里|
+|Trap positions|陷阱在哪里|
+|Unique positions|智能体访问过多少个不同位置|
+|Most visited positions|最常访问的位置|
+|First 20 positions|观察最初的行动路线|
+|Last 20 positions|观察超时前是否出现循环|
+
+Note：
+- evaluate_checkpoint.py 只统计成功率等指标。
+- diagnose_checkpoint.py 要深入 Episode 内部，记录行动轨迹。
+
+> (deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.diagnose_checkpoint
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.diagnose_checkpoint
+Episode: 2
+Coin: (7, 7)
+Traps: {(2, 5), (5, 6), (5, 2)}
+Unique positions: 8
+Most visited positions: [((0, 4), 98), ((0, 5), 97), ((0, 0), 1), ((0, 1), 1), ((0, 2), 1)]
+First 20 positions: [(0, 0), (0, 1), (0, 2), (0, 3), (1, 3), (1, 4), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5)]
+Last 20 positions: [(0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4)]
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
