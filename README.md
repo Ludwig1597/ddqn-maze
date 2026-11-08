@@ -565,3 +565,28 @@ Last 20 positions: [(0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 4), (0, 5), (0, 
 Q-value snapshots: {(0, 4): [0.5001500844955444, 0.5434780120849609, 0.48679476976394653, 0.5826958417892456], (0, 5): [0.4251641631126404, 0.4934784173965454, 0.5238676071166992, 0.5110989809036255]}
 
 ![](/doc/img/17.2.png)
+
+> 在 seed=0 训练所得的最佳模型（Episode 200）上，使用独立测试 seed=2026 进行轨迹诊断。Episode 2 中，智能体在位置 (0,4) 与 (0,5) 之间发生双格循环，两个位置累计被访问 195 次，最终因达到 200 步上限而终止。进一步检查神经网络输出发现，在 (0,4) 向右的 Q 值最高（0.5827），而在 (0,5) 向左的 Q 值最高（0.5239），证实了循环由当前贪心策略的动作选择直接造成。
+
+### 实践 18：多随机种子训练
+**课程设计：第 6.2 节 · 第 15 页**
+**作业原文要求**: 课程要求使用 5 个随机种子：0、1、2、3、4，每个种子训练 2000 Episode，并使用五种子的统计结果进行报告。第 7.2 节进一步要求报告均值、标准差和置信带。
+
+```
+python -m scripts.run_multi_seed
+===== Training Summary =====
+Environment steps: 162657
+Gradient updates: 161658
+Target synchronizations: 325
+Successful episodes: 1116
+Seed 1: training completed!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/ddqn_seed1.csv       
+    2001 logs/ddqn_seed1.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/ddqn_seed1_eval.csv
+      41 logs/ddqn_seed1_eval.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %ls -lh checkpoints/ddqn_seed1_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov  8 13:52 checkpoints/ddqn_seed1_best.pt
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.run_multi_seed     
+Seed 1: existing files found, skip training.
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
