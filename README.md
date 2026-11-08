@@ -631,3 +631,17 @@ Successful episodes: 960
 Training success rate: 0.48
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+
+#### 18.3.2 多种子均值与标准差
+
+学习用五次独立训练结果计算 Mean ± Standard Deviation。
+课程设计第 7.2 节要求使用五个随机种子报告均值、标准差。我们先用训练成功比例练习统计计算，再将相同方法用于正式独立评估指标。
+
+```
+python -m scripts.summarize_multi_seed
+===== Multi-Seed Statistics =====
+Mean Success Rate: 0.5303
+Std Success Rate: 0.0300
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
+

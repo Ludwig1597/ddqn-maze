@@ -6,6 +6,7 @@
 
 import csv
 from pathlib import Path
+import numpy as np
 
 
 def summarize_seed(seed):
@@ -51,6 +52,20 @@ def summarize_seed(seed):
 
 
 if __name__ == "__main__":
-
+    summarize = []
     for seed in range(5):
-        summarize_seed(seed)
+        summary = summarize_seed(seed)
+        summarize.append(summary)
+    success_rate = []
+    for summary in summarize:
+        success_rate.append(summary["success_rate"])
+    # 计算平均成功率
+    mean_success_rate = np.mean(success_rate)
+    # 计算样本标准差
+    # ddof=1 之所以使用 \(n-1\)，而不是 \(n\)，是因为：我们通常只有一部分样本，却希望用这些样本估计总体的方差。直接除以 \(n\)，往往会低估总体的波动程度。
+    # 这种修正叫作 贝塞尔校正（Bessel's Correction）。
+    std_success_rate = np.std(success_rate, ddof=1)
+    print("\n===== Multi-Seed Statistics =====")
+
+    print(f"Mean Success Rate: {mean_success_rate:.4f}")
+    print(f"Std Success Rate: {std_success_rate:.4f}")
