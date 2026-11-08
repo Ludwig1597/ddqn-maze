@@ -64,7 +64,69 @@ def plot_training_return():
         # np.arrage(50,2001)=[50,51,52,...,2000]
         # 因为移动平均窗口是 50。第一个平滑值：Episode 1～50 的平均 Return，对应横坐标 50。
         episodes = np.arange(WINDOW, WINDOW + len(smooth_returns))
-        plt.plot(episodes, smooth_returns, label=f"Seed{seed}")
+        (line,) = plt.plot(
+            episodes, smooth_returns, label=f"Seed {seed}", linewidth=1.2, alpha=0.7
+        )
+        plt.plot(
+            np.arange(1, len(returns) + 1),
+            returns,
+            color=line.get_color(),
+            linewidth=0.5,
+            alpha=0.06,
+        )
+        # plt.plot(episodes, smooth_returns, label=f"Seed{seed}")
+
+    # ===== Step 6: 五种子统计 =====
+    # TODO 6:
+    # 将 curves 转换成 NumPy 数组
+    # 目标形状：(5, 1951)
+    curves_array = np.array(curves)
+
+    # TODO 7:
+    # 计算五种子平均 Return
+    # 提示：np.mean(..., axis=0)
+    # axis=0：沿第 0 维计算，即对不同行的同一列数据求平均，得到每一列的均值。
+    mean_returns = np.mean(curves_array, axis=0)
+
+    # TODO 8:
+    # 计算每个 Episode 的样本标准差
+    # 提示：np.std(..., axis=0, ddof=1)
+    std_returns = np.std(curves_array, axis=0, ddof=1)
+
+    # ===== Step 7: 计算 95% 置信带 =====
+
+    n_seeds = len(SEEDS)
+
+    # 五种子、df=4 的双侧 t 临界值
+    t_critical = 2.776
+
+    # TODO 9:
+    # 标准误：std / sqrt(n)
+    standard_error = std_returns / np.sqrt(n_seeds)
+
+    # TODO 10:
+    # 置信区间上下界
+    ci_lower = mean_returns - t_critical * standard_error
+    ci_upper = mean_returns + t_critical * standard_error
+
+    # ===== Step 8: 绘图 =====
+
+    episodes = np.arange(WINDOW, WINDOW + len(mean_returns))
+
+    # TODO 11:
+    # 使用 plt.plot() 绘制 mean_returns
+    # 建议黑色、linewidth=2.5
+    # label="Mean Return"
+    plt.plot(episodes, mean_returns, color="black", linewidth=2.5, label="Mean Return")
+
+    # TODO 12:
+    # 使用 plt.fill_between()
+    # 绘制 ci_lower 到 ci_upper 之间的阴影
+    # 建议 alpha=0.2
+    # label="95% CI"
+    plt.fill_between(
+        episodes, ci_lower, ci_upper, color="gray", alpha=0.3, label="95% CI"
+    )
 
     plt.xlabel("Episode")
     plt.ylabel("Episode Return")
