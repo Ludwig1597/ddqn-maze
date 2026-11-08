@@ -35,12 +35,36 @@ def diagnose_checkpoint(
     for ep in range(episodes):
         state = env.reset()
         done = False
+        q_snapshots = {}
 
         # 记录本回合经过的所有位置
         # map(int, env.pos)：把坐标中的每个元素转换成整数。
         positions = [tuple(map(int, env.pos))]
+
         # step3: 执行一个episode
         while not done:
+            # 当前位置
+            pos = tuple(map(int, env.pos))
+            # 只记录这两个位置，每个位置记录一次
+            if pos in {(0, 4), (0, 5)} and pos not in q_snapshots:
+                # TODO 1: 把 state 转换为 float32 Tensor
+                state_tensor = torch.as_tensor(state, dtype=torch.float32)
+                # TODO 2: 增加batch维度，使形状为(1,75)
+                state_tensor = state_tensor.unsqueeze(0)
+                # TODO 3: 计算四个动作的Q值
+                with torch.no_grad():
+                    q_values = agent.online(state_tensor)  # q_values 形状是 (1,4)
+                # TODO 4: 将四个动作的Q值转化为Python列表并保存
+                """最后q_snapshots的结构
+                {
+                    (0, 4): [0.12, 0.35, -0.08, 0.21],
+                    (0, 5): [0.18, -0.04, 0.25, 0.31]
+                }
+                """
+                # q_values 形状是 (4,)
+                q_snapshots[pos] = q_values.squeeze(0).tolist()
+                best_action = int(q_values.argmax(dim=1).item())
+                print(f"Position: {pos}, Best action: {best_action}")
             # TODO 2:
             # 使用anget.act()选择动作
             # epsilon=0.0
@@ -83,6 +107,7 @@ def diagnose_checkpoint(
             print(f"Most visited positions: {counts.most_common(5)}")
             print(f"First 20 positions: {positions[:20]}")
             print(f"Last 20 positions: {positions[-20:]}")
+            print(f"Q-value snapshots: {q_snapshots}")
             break
 
 
