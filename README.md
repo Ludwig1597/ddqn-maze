@@ -632,7 +632,7 @@ Training success rate: 0.48
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
 
-#### 18.3.2 多种子均值与标准差
+#### 实践 18.3.2 多种子均值与标准差
 
 学习用五次独立训练结果计算 Mean ± Standard Deviation。
 课程设计第 7.2 节要求使用五个随机种子报告均值、标准差。我们先用训练成功比例练习统计计算，再将相同方法用于正式独立评估指标。
@@ -645,3 +645,12 @@ Std Success Rate: 0.0300
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
 
+#### 实践 18.3.3：绘制 DDQN 学习曲线
+
+课程设计第 7.2 节，第 18 页 · 原文要求，这次我们要生成两张真实实验图：
+1. Training Return Curve：五个 Seed 的训练回报及 50 Episode 移动平均。
+2. Evaluation Success Rate Curve：五个 Seed 的周期评估成功率及均值、95% 置信带。
+
+![](/doc/img/18.3.3.png)
+
+初步结论：五种子训练回报表现出早期改善，但后期不稳定，种子间存在明显差异。
