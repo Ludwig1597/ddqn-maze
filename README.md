@@ -590,3 +590,44 @@ Seed 1: training completed!
 Seed 1: existing files found, skip training.
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+#### 实践 18.2：五种种子训练
+
+修改：for seed in range(5)
+
+#### 实践 18.3.1：从日志恢复五种子训练统计
+
+汇总五个随机种子的训练统计：
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.summarize_multi_seed
+
+===== Seed 0 Summary =====
+Episodes: 2000
+Environment steps: 161968
+Successful episodes: 1094
+Training success rate: 0.547
+
+===== Seed 1 Summary =====
+Episodes: 2000
+Environment steps: 162657
+Successful episodes: 1116
+Training success rate: 0.558
+
+===== Seed 2 Summary =====
+Episodes: 2000
+Environment steps: 167859
+Successful episodes: 1071
+Training success rate: 0.5355
+
+===== Seed 3 Summary =====
+Episodes: 2000
+Environment steps: 174282
+Successful episodes: 1062
+Training success rate: 0.531
+
+===== Seed 4 Summary =====
+Episodes: 2000
+Environment steps: 190868
+Successful episodes: 960
+Training success rate: 0.48
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```

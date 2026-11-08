@@ -46,9 +46,7 @@ def run_seed(seed, n_episodes=2000):
 
 
 if __name__ == "__main__":
-
-    # 本轮只测试 Seed 1
-    seeds = [0, 1, 2]
+    seeds = [0, 1, 2, 3, 4]
 
     for seed in seeds:
         run_seed(seed, n_episodes=2000)
