@@ -143,5 +143,95 @@ def plot_training_return():
     plt.show()
 
 
+def load_eval_success_rate(seed):
+    path = Path(f"logs/ddqn_seed{seed}_eval.csv")
+    with open(path, "r", newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    # TODO 1:
+    # 读取 episode 列，转换成整数数组
+    # Note：CSV 读出的数字默认是字符串。
+    episodes = []
+    for row in rows:
+        episodes.append(int(row["episode"]))
+    # NumPy 数组可以直接进行批量数值计算
+    episodes = np.array(episodes, dtype=int)
+
+    # TODO 2:
+    # 读取 success_rate 列，转换成浮点数组
+    success_rates = []
+    for row in rows:
+        success_rates.append(float(row["success_rate"]))
+    success_rates = np.array(success_rates, dtype=float)
+    return episodes, success_rates
+
+
+def plot_eval_success_rate():
+
+    curves = []
+    plt.figure(figsize=(11, 6))
+
+    # TODO 3:
+    # 遍历 Seed 0～4
+    # 读取 episode 和 success_rate
+    # 验证各 Seed 的 episode 数组一致
+    # 把 success_rate 加入 curves
+    # 绘制每个 Seed 的 Success Rate 曲线
+    reference_episodes = None  # 参考回合编号
+    for seed in SEEDS:
+        episodes, success_rate = load_eval_success_rate(seed)
+        if reference_episodes is None:
+            reference_episodes = episodes
+        else:
+            # 验证 Seed 1/2/3/4 的评估 Episode 编号与 Seed 0 完全一致。
+            assert np.array_equal(episodes, reference_episodes)
+        curves.append(success_rate)
+        plt.plot(episodes, success_rate, label=f"Seed {seed}")
+
+    # TODO 4:
+    # 将 curves 转成 (5, 40) 数组
+    # 计算平均值、样本标准差
+    # 计算 95% CI
+    curves_array = np.array(curves, dtype=float)
+    assert curves_array.shape == (5, 40)
+    mean_success_rates = np.mean(curves_array, axis=0)
+    std_success_rates = np.std(curves_array, axis=0, ddof=1)
+    n_seeds = len(SEEDS)
+    t_critical = 2.776
+    standard_error = std_success_rates / np.sqrt(n_seeds)
+    ci_lower = mean_success_rates - t_critical * standard_error
+    ci_upper = mean_success_rates + t_critical * standard_error
+
+    # TODO 5:
+    # 绘制平均 Success Rate 曲线
+    plt.plot(
+        reference_episodes,
+        mean_success_rates,
+        color="black",
+        linewidth=2.5,
+        label="Mean Success Rate",
+    )
+    # 使用 fill_between 绘制 95% CI
+    plt.fill_between(
+        reference_episodes, ci_lower, ci_upper, color="gray", alpha=0.3, label="95% CI"
+    )
+
+    plt.xlabel("Episode")
+    plt.ylabel("Evaluation Success Rate")
+    plt.title("DDQN Evaluation Success Rate - 5 Seeds")
+
+    plt.ylim(
+        0, 1
+    )  # plt.ylim(0, 1) 是 Matplotlib 中用于设置图表 Y 轴（纵坐标）显示范围的函数
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    Path("figures").mkdir(exist_ok=True)
+
+    plt.savefig("figures/ddqn_eval_success_rate.png", dpi=200, bbox_inches="tight")
+
+    plt.show()
+
+
 if __name__ == "__main__":
     plot_training_return()
+    plot_eval_success_rate()
