@@ -1,28 +1,57 @@
+
 """
 文件: scripts/estimate_q_bias.py
-用途: 计算神经网络预测的最大 Q 值
-运行: python -m scripts.estimate_q_bias
+用途: Q 值高估分析工具
 """
 
+import numpy as np
 import torch
+
+from envs.maze import CoinMaze
 
 
 @torch.no_grad()
 def compute_max_q(agent, states):
     """
-    states: (batch_size, 75)
-    返回:   (batch_size,)
+    states: Tensor, shape (batch_size, 75)
+    返回: Tensor, shape (batch_size,)
     """
-
-    # TODO 1:
-    # 调用 agent.online(states)
-    # 得到所有动作的 Q 值
     q_values = agent.online(states)
+    return q_values.max(dim=1).values
 
-    # TODO 2:
-    # 对动作维度取最大值
-    max_q = q_values.max(dim=1).values
 
-    # TODO 3:
-    # 返回每个状态的最大 Q 值
-    return max_q
+def capture_snapshot(env):
+    """
+    保存 CoinMaze 当前状态。
+    """
+    if env.coin is None:
+        raise ValueError("Call env.reset() before capturing a snapshot")
+
+    return {
+        "size": env.size,
+        "max_steps": env.max_steps,
+        "pos": env.pos.copy(),
+        "coin": tuple(env.coin),
+        "traps": env.traps.copy(),
+        "t": env.t,
+    }
+
+
+def restore_snapshot(snapshot):
+    """
+    根据快照创建独立的 CoinMaze 环境。
+    当前只恢复同一回合的状态，不恢复后续 reset 的 RNG 序列。
+    """
+    env = CoinMaze(
+        size=snapshot["size"],
+        max_steps=snapshot["max_steps"],
+        seed=0,
+    )
+
+    # 不调用 reset()，避免重新生成金币和陷阱
+    env.pos = np.array(snapshot["pos"], dtype=int).copy()
+    env.coin = tuple(snapshot["coin"])
+    env.traps = snapshot["traps"].copy()
+    env.t = int(snapshot["t"])
+
+    return env
