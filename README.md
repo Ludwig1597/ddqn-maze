@@ -959,3 +959,43 @@ Successful episodes: 4
     2001 logs/ddqn_seed0.csv
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+
+### 实践 19.2：DQN 五种子正式训练
+**课程设计第 18 页 · 第 7.3 节**
+**作业原文要求**目标非常明确：
+
+在相同实验配置下，分别训练 DQN 和 DDQN，比较两种算法的性能及 Q 值高估情况。
+
+DDQN 的五种子训练已经完成，我们现在只需要训练 DQN。
+
+> python -m scripts.run_multi_seed
+
+```
+===== Training Summary =====
+Environment steps: 151983
+Gradient updates: 150984
+Target synchronizations: 303
+Successful episodes: 1136
+dqn_seed4: training completed!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/dqn_seed{0,1,2,3,4}.csv
+    2001 logs/dqn_seed0.csv
+    2001 logs/dqn_seed1.csv
+    2001 logs/dqn_seed2.csv
+    2001 logs/dqn_seed3.csv
+    2001 logs/dqn_seed4.csv
+   10005 total
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/dqn_seed{0,1,2,3,4}_eval.csv
+      41 logs/dqn_seed0_eval.csv
+      41 logs/dqn_seed1_eval.csv
+      41 logs/dqn_seed2_eval.csv
+      41 logs/dqn_seed3_eval.csv
+      41 logs/dqn_seed4_eval.csv
+     205 total
+(deep-learning) jaden@Macbook-Pro ddqn-maze %ls -lh checkpoints/dqn_seed{0,1,2,3,4}_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov 10 01:59 checkpoints/dqn_seed0_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov 10 02:02 checkpoints/dqn_seed1_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov 10 02:03 checkpoints/dqn_seed2_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov 10 02:04 checkpoints/dqn_seed3_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov 10 02:06 checkpoints/dqn_seed4_best.pt
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```

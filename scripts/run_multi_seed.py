@@ -1,6 +1,6 @@
 """
 文件: scripts/run_multi_seed.py
-用途: 统一执行 DDQN 多随机种子训练
+用途: 统一执行 DQN / DDQN 多种子训练
 运行: python -m scripts.run_multi_seed
 """
 
@@ -8,12 +8,17 @@ from pathlib import Path
 from train import train
 
 
-def run_seed(seed, n_episodes=2000):
+def run_seed(seed, n_episodes=2000, algorithm="ddqn"):
+    # Step 1: 检查算法名称
+    if algorithm not in {"dqn", "ddqn"}:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
+    # Step 2: 统一实验名称
+    run_name = f"{algorithm}_seed{seed}"
 
     # Step 1: 构造该 Seed 的输出路径
-    train_log = Path(f"logs/ddqn_seed{seed}.csv")
-    eval_log = Path(f"logs/ddqn_seed{seed}_eval.csv")
-    checkpoint = Path(f"checkpoints/ddqn_seed{seed}_best.pt")
+    train_log = Path(f"logs/{run_name}.csv")
+    eval_log = Path(f"logs/{run_name}_eval.csv")
+    checkpoint = Path(f"checkpoints/{run_name}_best.pt")
     paths = [train_log, eval_log, checkpoint]
     # Step 2: 避免覆盖已有实验
     # TODO 1:
@@ -24,29 +29,29 @@ def run_seed(seed, n_episodes=2000):
     # path.exists()
     # any(...)
     if any(path.exists() for path in paths):
-        print(f"Seed {seed}: existing files found, skip training.")
+        print(f"{run_name}: existing files found, skip training.")
         return
 
     # Step 3: 开始训练
-    print(f"\n===== Training Seed {seed} =====")
+    print(f"\n===== Training {algorithm.upper()} Seed {seed} =====")
 
     # TODO 2: 调用训练函数
     # 调用 train()
     # 传入 n_episodes 和 seed
-    train(n_episodes=n_episodes, seed=seed)
+    train(n_episodes=n_episodes, seed=seed, algorithm=algorithm)
 
     # Step 4: 检查文件
     # TODO 3:
     # 判断 train_log、eval_log、checkpoint 是否全部生成
     # 如果全部存在，打印完成信息
     if all(path.exists() for path in paths):
-        print(f"Seed {seed}: training completed!")
+        print(f"{run_name}: training completed!")
     else:
-        print(f"Seed {seed}: some output files are missing.")
+        print(f"{run_name}: some output files are missing.")
 
 
 if __name__ == "__main__":
     seeds = [0, 1, 2, 3, 4]
-
+    algorithm = "dqn"
     for seed in seeds:
-        run_seed(seed, n_episodes=2000)
+        run_seed(seed, n_episodes=2000, algorithm=algorithm)
