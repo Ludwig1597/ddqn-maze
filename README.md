@@ -999,3 +999,54 @@ dqn_seed4: training completed!
 -rw-r--r--@ 1 jaden  staff   108K Nov 10 02:06 checkpoints/dqn_seed4_best.pt
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+
+### 实践 19.3：DQN vs DDQN 独立评估
+**课程设计第 7.3 节 · 作业原文要求**
+
+现在我们要回答一个核心问题：
+在相同的 200 个测试 Episode 上，普通 DQN 和 DDQN 哪个成功率更高？
+
+> python -m scripts.evaluate_multi_seed
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.evaluate_multi_seed
+Checkpoint episode: 1000
+Best checkpoint rate: 0.7
+
+===== Independent Evaluation =====
+{'success_rate': 0.59, 'avg_return': -0.2751000000000006, 'avg_steps': 87.1, 'outcomes': {'coin': 118, 'trap': 0, 'timeout': 82}}
+Checkpoint episode: 1850
+Best checkpoint rate: 0.7
+
+===== Independent Evaluation =====
+{'success_rate': 0.725, 'avg_return': 0.10834999999999961, 'avg_steps': 62.39, 'outcomes': {'coin': 145, 'trap': 0, 'timeout': 55}}
+Checkpoint episode: 1000
+Best checkpoint rate: 0.7
+
+===== Independent Evaluation =====
+{'success_rate': 0.42, 'avg_return': -0.9677000000000008, 'avg_steps': 120.11, 'outcomes': {'coin': 84, 'trap': 0, 'timeout': 116}}
+Checkpoint episode: 200
+Best checkpoint rate: 0.8
+
+===== Independent Evaluation =====
+{'success_rate': 0.545, 'avg_return': -0.4193000000000006, 'avg_steps': 96.975, 'outcomes': {'coin': 109, 'trap': 0, 'timeout': 91}}
+Checkpoint episode: 200
+Best checkpoint rate: 0.9
+
+===== Independent Evaluation =====
+{'success_rate': 0.485, 'avg_return': -0.6464500000000009, 'avg_steps': 107.84, 'outcomes': {'coin': 97, 'trap': 0, 'timeout': 103}}
+Saved results to results/dqn_final_eval.csv
+
+===== Multi-Seed Evaluation =====
+Seed 0: Success Rate = 0.5900|Avg Return = -0.2751|Avg Steps = 87.10|
+Seed 1: Success Rate = 0.7250|Avg Return = 0.1083|Avg Steps = 62.39|
+Seed 2: Success Rate = 0.4200|Avg Return = -0.9677|Avg Steps = 120.11|
+Seed 3: Success Rate = 0.5450|Avg Return = -0.4193|Avg Steps = 96.97|
+Seed 4: Success Rate = 0.4850|Avg Return = -0.6465|Avg Steps = 107.84|
+
+===== Summary(Mean ± Std) =====
+Success Rate: 0.5530 ± 0.1155
+Avg Return:   -0.4400 ± 0.4029
+Avg Steps:    94.88 ± 21.94
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```

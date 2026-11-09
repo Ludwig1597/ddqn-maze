@@ -4,10 +4,12 @@ import csv
 from pathlib import Path
 
 
-def evaluate_multi_seed():
+def evaluate_multi_seed(algorithm="ddqn"):
+    if algorithm not in {"dqn", "ddqn"}:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
     results = []
     for seed in range(5):
-        checkpoint_path = f"checkpoints/ddqn_seed{seed}_best.pt"
+        checkpoint_path = f"checkpoints/{algorithm}_seed{seed}_best.pt"
 
         # TODO 1:
         # 调用 evaluate_checkpoint()
@@ -36,7 +38,7 @@ def evaluate_multi_seed():
         returns.append(result["avg_return"])
         steps.append(result["avg_steps"])
 
-    output_path = Path("results/ddqn_final_eval.csv")
+    output_path = Path(f"results/{algorithm}_final_eval.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
@@ -65,9 +67,9 @@ def evaluate_multi_seed():
     for result in results:
         print(
             f"Seed {result['seed']}: "
-            f"Success Rate = {result['success_rate']:.4f}|"
-            f"Avg Return = {result['avg_return']:.4f}|"
-            f"Avg Steps = {result['avg_steps']:.2f}|"
+            f"Success Rate = {result['success_rate']:.4f} |"
+            f"Avg Return = {result['avg_return']:.4f} |"
+            f"Avg Steps = {result['avg_steps']:.2f}"
         )
     # 输出五个Seed的统计汇总
     print("\n===== Summary(Mean ± Std) =====")
@@ -77,4 +79,4 @@ def evaluate_multi_seed():
 
 
 if __name__ == "__main__":
-    evaluate_multi_seed()
+    evaluate_multi_seed(algorithm="dqn")
