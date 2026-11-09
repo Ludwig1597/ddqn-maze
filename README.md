@@ -866,3 +866,64 @@ plot_training_return()
 因此，我们现在可以得到一个较有依据的初步结论：
 
 DDQN 确实学到了一定的寻币能力，但在现有局部观测、网络结构和超参数配置下，训练稳定性与最终成功率都不理想。
+
+### 实践18.4：五个最佳模型的独立评估
+做 DDQN 五个训练模型的最终评估（Multi-Seed Final Evaluation）。
+这次我们要回答一个比训练曲线更重要的问题：
+**五个随机种子训练出的最佳 DDQN 模型，在相同的 200 个测试环境中，究竟能达到多少成功率？**
+
+课程设计第 7.2 节要求加载最佳 Checkpoint，在 200 Episode 上使用 epsilon=0 进行最终评估。
+
+**目标配置**
+|项目|设置|
+|:-:|:-:|
+|模型|Seed 0–4 的最佳 Checkpoint|
+|测试 Episode|每个模型 200|
+|测试随机种子|2026|
+|探索率|0|
+|评估指标|Success Rate、Avg Return、Avg Steps|
+|最终统计|五种子均值 ± 标准差|
+
+> python -m scripts.evaluate_multi_seed
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.evaluate_multi_seed
+Checkpoint episode: 200
+Best checkpoint rate: 0.6
+
+===== Independent Evaluation =====
+{'success_rate': 0.335, 'avg_return': -1.0213000000000008, 'avg_steps': 135.965, 'outcomes': {'coin': 67, 'trap': 0, 'timeout': 133}}
+Checkpoint episode: 750
+Best checkpoint rate: 0.6
+
+===== Independent Evaluation =====
+{'success_rate': 0.375, 'avg_return': -0.9056500000000008, 'avg_steps': 128.44, 'outcomes': {'coin': 75, 'trap': 0, 'timeout': 125}}
+Checkpoint episode: 1250
+Best checkpoint rate: 0.8
+
+===== Independent Evaluation =====
+{'success_rate': 0.66, 'avg_return': -0.0932000000000005, 'avg_steps': 74.09, 'outcomes': {'coin': 132, 'trap': 0, 'timeout': 68}}
+Checkpoint episode: 400
+Best checkpoint rate: 0.8
+
+===== Independent Evaluation =====
+{'success_rate': 0.54, 'avg_return': -0.4896000000000007, 'avg_steps': 97.8, 'outcomes': {'coin': 108, 'trap': 0, 'timeout': 92}}
+Checkpoint episode: 650
+Best checkpoint rate: 0.6
+
+===== Independent Evaluation =====
+{'success_rate': 0.39, 'avg_return': -1.106750000000001, 'avg_steps': 125.755, 'outcomes': {'coin': 78, 'trap': 0, 'timeout': 122}}
+
+===== Multi-Seed Evaluation =====
+Seed 0: Success Rate = 0.3350Avg Return = -1.0213Avg Steps = 135.97
+Seed 1: Success Rate = 0.3750Avg Return = -0.9057Avg Steps = 128.44
+Seed 2: Success Rate = 0.6600Avg Return = -0.0932Avg Steps = 74.09
+Seed 3: Success Rate = 0.5400Avg Return = -0.4896Avg Steps = 97.80
+Seed 4: Success Rate = 0.3900Avg Return = -1.1068Avg Steps = 125.75
+
+===== Summary(Mean ± Std) =====
+Success Rate: 0.4600 ± 0.1362
+Avg Return:   -0.7233 ± 0.4245
+Avg Steps:    112.41 ± 25.84
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
