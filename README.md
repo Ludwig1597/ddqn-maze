@@ -1051,10 +1051,46 @@ Avg Steps:    94.88 ± 21.94
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
 
-下一步：绘制 DQN vs DDQN A/B 对照图
+### 实践 19.4：DQN vs DDQN 独立评估对照图
+
+绘制 DQN vs DDQN A/B 对照图
 新建 scripts/compare_algorithms.py，完成三个小任务：
 1. 读取两个 CSV，分别提取五个 Seed 的成功率。
 2. 使用 plt.bar() 绘制分组柱状图，比较同一 Seed 下的 DQN 与 DDQN。
 3. 保存到 figures/dqn_vs_ddqn_success_rate.png。
 
 ![](/figures/dqn_vs_ddqn_final_eval.png)
+
+### 实践 20：Q 值高估偏差 Δ
+课程设计第 7.3 节 · 作业原文要求
+
+这一步将进入课程设计最重要的算法分析部分之一。
+
+我们需要比较：
+\[
+\Delta(s)=\max_a Q_\theta(s,a)-\hat V_{\mathrm{MC}}(s)
+\]
+
+其中：
+- \(\max_a Q_\theta(s,a)\)：神经网络认为当前状态最优动作的 Q 值。
+- \(\hat V_{\mathrm{MC}}(s)\)：从同一环境状态出发，执行当前贪心策略，通过多次 Monte Carlo Rollout 估计的回报。
+- \(\Delta(s)\)：网络预测与实际采样回报之间的差值。
+注意，这里的 MC 估计是当前策略的价值估计，不是真正的最优 \(Q^*\)。因此，应把 Δ 称作相对于 MC 策略回报的估计偏差，正的 Δ 是高估的证据，但不能直接等同于严格意义上的最优 Q 值高估。
+
+#### 20.1 计算网络预测的最大 Q 值
+
+当前步骤
+
+目标文件：scripts/estimate_q_bias.py
+
+输入一批局部观测，得到每个观测的最大预测 Q 值，验证输出形状和数值。
+
+![](/doc/img/20.1.png)
+
+#### 20.2 计算 Monte Carlo 回报
+
+从相同的完整环境状态出发，进行 30 次贪心 Rollout，估计实际折扣回报。
+
+#### 20.3 计算并比较 Δ
+
+在 200 个采样环境状态上比较 DQN 与 DDQN，并整理统计结果与图表。

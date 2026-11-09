@@ -45,16 +45,19 @@ def compare_algorithms():
     # TODO 4:
     # 添加标题、坐标轴、图例
     # 保存图片
+    plt.title("DQN vs DDQN - Independent Evaluation")
     plt.xticks(
         x, [f"Seed {i}" for i in range(5)]
     )  # xticks = X-axis Ticks，意思是 X 轴刻度。
     plt.ylim(0, 1)  # ylim = Y-axis Limits，意思是 Y 轴显示范围。
+    plt.ylabel("Success Rate")
     plt.legend()
     plt.grid(
         axis="y", alpha=0.3
     )  # 这里的 axis="y" 表示只显示 Y 轴刻度对应的网格线，也就是水平网格线。
     Path("figures").mkdir(exist_ok=True)
     plt.savefig("figures/dqn_vs_ddqn_final_eval.png", dpi=200, bbox_inches="tight")
+
     plt.show()
 
 
