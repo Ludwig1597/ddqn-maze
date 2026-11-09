@@ -8,6 +8,7 @@ from pathlib import Path
 
 from envs.maze import CoinMaze
 from agents.ddqn import DDQNAgent
+from agents.dqn import DQNAgent
 from evaluate import evaluate
 
 
@@ -23,7 +24,7 @@ def epsilon_schedule(step):
 # n_episodes：Number of Episodes，训练回合总数。
 # n_episodes=10 表示总共训练 10 个回合。
 # 从 env.reset() 开始，直到 done=True，通常就算完成一个 Episode
-def train(n_episodes=10, seed=0):
+def train(n_episodes=10, seed=0, algorithm="ddqn"):
     # 固定随机种子
     # Python 标准库 random
     # random.randint() 随机选择动作
@@ -37,7 +38,31 @@ def train(n_episodes=10, seed=0):
     # 迷宫内部的随机机制
     # 随机生成金币、陷阱的位置
     env = CoinMaze(seed=seed)
-    agent = DDQNAgent()
+    if algorithm == "ddqn":
+        agent = DDQNAgent()
+    elif algorithm == "dqn":
+        agent = DQNAgent()
+    else:
+        raise ValueError(f"Unsupported algorithm:{algorithm}")
+
+    # 统一实验名称
+    run_name = f"{algorithm}_seed{seed}"
+
+    # 检查是否已经有实验结果
+    train_log_path = Path("logs") / f"{run_name}.csv"
+    eval_log_path = Path("logs") / f"{run_name}_eval.csv"
+    checkpoint_path = Path("checkpoints") / f"{run_name}_best.pt"
+
+    output_paths = [
+        train_log_path,
+        eval_log_path,
+        checkpoint_path,
+    ]
+
+    if any(path.exists() for path in output_paths):
+        raise FileExistsError(
+            f"Experiment {run_name} already has output files. " "Refusing to overwrite."
+        )
 
     global_steps = 0
     update_count = 0  # 发生多少次真正的梯度更新
@@ -48,7 +73,7 @@ def train(n_episodes=10, seed=0):
 
     best_success_rate = -1.0
     # pt是pyTorch的缩写，通常用于保存神经网络参数
-    checkpoint_path = Path("checkpoints") / f"ddqn_seed{seed}_best.pt"
+    checkpoint_path = Path("checkpoints") / f"{run_name}_best.pt"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
     for ep in range(n_episodes):
@@ -187,7 +212,7 @@ def train(n_episodes=10, seed=0):
     print("Target synchronizations:", sync_count)
     print("Successful episodes:", success_count)
     # logs/ddqn_seed0.csv
-    log_path = Path("logs") / f"ddqn_seed{seed}.csv"
+    log_path = Path("logs") / f"{run_name}.csv"
     # parents=True	如果上级目录不存在，也自动创建
     # exist_ok=True	如果文件夹已经存在，不要报错
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -219,7 +244,7 @@ def train(n_episodes=10, seed=0):
         # 把episode_logs中的记录全部写入文件
         writer.writerows(episode_logs)
     # 评估CSV路径
-    eval_log_path=Path("logs")/f"ddqn_seed{seed}_eval.csv"
+    eval_log_path=Path("logs")/f"{run_name}_eval.csv"
     with eval_log_path.open("w",newline="",encoding="utf-8") as f:
         writer=csv.DictWriter(
             f,
@@ -237,4 +262,4 @@ def train(n_episodes=10, seed=0):
 
 # 检查当前文件是否作为主程序运行
 if __name__ == "__main__":
-    train(n_episodes=10, seed=0)
+    train(n_episodes=10, seed=99, algorithm="dqn")

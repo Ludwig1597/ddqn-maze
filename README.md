@@ -927,3 +927,35 @@ Avg Return:   -0.7233 ± 0.4245
 Avg Steps:    112.41 ± 25.84
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+
+### 实践 19.1：实现普通 DQN 对照算法
+
+**课程设计第 7.3 节 · 第 18 页**
+**目标：**保持网络结构、经验回放、优化器、训练超参数完全相同，只改变 TD Target 的计算方式。
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -c "from train import train; train(n_episodes=10, seed=99, algorithm='dqn')"
+Episode:   1 |Return:   0.630 |Steps:  24 |Epsilon: 0.999 |Global steps:24
+Episode:   2 |Return:  -1.410 |Steps:  26 |Epsilon: 0.998 |Global steps:50
+Episode:   3 |Return:  -2.630 |Steps:  98 |Epsilon: 0.993 |Global steps:148
+Episode:   4 |Return:  -1.950 |Steps:  62 |Epsilon: 0.990 |Global steps:210
+Episode:   5 |Return:  -1.320 |Steps:  21 |Epsilon: 0.989 |Global steps:231
+Episode:   6 |Return:  -0.100 |Steps:  59 |Epsilon: 0.986 |Global steps:290
+Episode:   7 |Return:   0.120 |Steps:  49 |Epsilon: 0.984 |Global steps:339
+Episode:   8 |Return:  -2.070 |Steps:  54 |Epsilon: 0.981 |Global steps:393
+Episode:   9 |Return:  -1.160 |Steps: 119 |Epsilon: 0.976 |Global steps:512
+Episode:  10 |Return:  -1.930 |Steps:  48 |Epsilon: 0.973 |Global steps:560
+
+===== Training Summary =====
+Environment steps: 560
+Gradient updates: 0
+Target synchronizations: 1
+Successful episodes: 4
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/dqn_seed99.csv
+      11 logs/dqn_seed99.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %ls -lh checkpoints/ddqn_seed0_best.pt
+-rw-r--r--@ 1 jaden  staff   108K Nov  7 07:50 checkpoints/ddqn_seed0_best.pt
+(deep-learning) jaden@Macbook-Pro ddqn-maze %wc -l logs/ddqn_seed0.csv
+    2001 logs/ddqn_seed0.csv
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
