@@ -1050,3 +1050,11 @@ Avg Return:   -0.4400 ± 0.4029
 Avg Steps:    94.88 ± 21.94
 (deep-learning) jaden@Macbook-Pro ddqn-maze %
 ```
+
+下一步：绘制 DQN vs DDQN A/B 对照图
+新建 scripts/compare_algorithms.py，完成三个小任务：
+1. 读取两个 CSV，分别提取五个 Seed 的成功率。
+2. 使用 plt.bar() 绘制分组柱状图，比较同一 Seed 下的 DQN 与 DDQN。
+3. 保存到 figures/dqn_vs_ddqn_success_rate.png。
+
+![](/figures/dqn_vs_ddqn_final_eval.png)
