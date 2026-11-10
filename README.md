@@ -1106,3 +1106,42 @@ Avg Steps:    94.88 ± 21.94
 - 公平比较： DQN 和 DDQN 使用完全相同的 200 个状态，不会因为采样地图不同产生额外差异。
 - 可复现： 把状态保存到文件中，后续实验直接加载，而不是每次重新随机生成。
 其中，200 个状态和固定采样属于作业原文要求；采样间隔 20 步、Seed 4242 和 JSON 文件格式是我们选择的工程实现参数。
+
+#### 实践 20.4：实现 Monte Carlo Rollout
+课程设计第 18～19 页，§7.3「A/B 对照实验：测量过估计」
+
+**做什么：**从固定环境快照恢复迷宫，让已训练的智能体以 epsilon=0 一直执行动作，直到到达金币、陷阱或超时，并计算累计折扣回报。
+
+**为什么：**实践 20.1 给出网络预测的最大 Q 值，实践 20.4 则给出相同起点下实际执行策略得到的回报。之后才能在实践 20.5 计算二者差值 Δ。
+
+课程设计要求从每个固定状态执行 30 次 Rollout；本次先实现和测试这个功能。DDQN实践项目设计(2).docx
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m tests.test_mc_rollout
+test_discounted_return PASSED
+test_coin_terminal PASSED
+test_trap_terminal PASSED
+test_mc_repeatability PASSED
+
+All MC Rollout tests PASSED!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.estimate_mc_return
+===== Monte Carlo Rollout Smoke Test =====
+Checkpoint: checkpoints/ddqn_seed0_best.pt
+Available snapshots: 200
+Rollouts per state: 30
+
+State 0
+MC mean return: -0.199993
+MC std return: 0.000000
+Steps: 200
+Outcomes: {'coin': 0, 'trap': 0, 'timeout': 30}
+
+State 1
+MC mean return: -0.199980
+MC std return: 0.000000
+Steps: 180
+Outcomes: {'coin': 0, 'trap': 0, 'timeout': 30}
+
+MC Rollout smoke test PASSED!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
