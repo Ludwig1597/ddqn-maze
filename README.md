@@ -1166,3 +1166,31 @@ MC Rollout smoke test PASSED!
 本实践会分别对 DQN 和 DDQN 的五个最佳 Checkpoint 计算偏差，并保存逐状态记录和五种子统计。
 
 **时间优化：**由于你的环境及贪心策略是确定性的，默认模式每个状态只实际运行一次 Rollout，这与重复 30 次得到的均值在数学上等价。脚本同时提供 --full-30，可以严格执行任务书要求的 30 次重复；两种模式会明确标记，避免混淆。
+
+#### 实践 20.6.1：绘制 DQN vs DDQN 的最终 Q 值偏差图
+课程设计 §7.3，第 18～19 页 · 实验可视化
+一、做什么？为什么？
+我们要把刚才计算的 10 个模型的 Δ 画成柱状图，直观比较两种算法在五个 Seed 上的偏差。
+
+本次只绘制最佳 Checkpoint 的最终偏差。
+
+这里必须区分两种图：
+- **最终模型偏差图：**我们现有数据已经足够，可以直接完成。
+- **训练过程 Δ 曲线：**课程原文要求每 1000 环境步测量一次，并以训练步数为横轴。我们尚未保存这些历史测量结果，不能用最终 Checkpoint 冒充历史曲线。
+
+```
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m tests.test_q_bias_plot
+test_load_bias_summary PASSED
+test_plot_final_q_bias PASSED
+
+All Q-bias plot tests PASSED!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %python -m scripts.plot_q_bias
+===== Final Q Bias Comparison =====
+DQN:  +0.1604 ± 0.2650
+DDQN: +0.0602 ± 0.1650
+DQN - DDQN: +0.1002
+Saved: figures/dqn_vs_ddqn_q_bias_final.png
+(deep-learning) 
+```
+![](/figures/dqn_vs_ddqn_q_bias_final.png)
+
