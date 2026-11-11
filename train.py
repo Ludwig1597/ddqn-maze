@@ -34,6 +34,7 @@ def train(
     monitor_fn=None,
     monitor_interval_steps=None,
     monitor_output_path=None,
+    run_tag=None,
 ):
     """
     参数:
@@ -74,6 +75,20 @@ def train(
 
     # 统一实验名称
     run_name = f"{algorithm}_seed{seed}"
+    if run_tag:
+        run_name += f"_{run_tag}"
+    # 保护已有日志和模型，防止误覆盖
+    output_paths = [
+        Path("logs") / f"{run_name}.csv",
+        Path("logs") / f"{run_name}_eval.csv",
+        Path("checkpoints") / f"{run_name}_best.pt",
+    ]
+
+    if any(path.exists() for path in output_paths):
+        raise FileExistsError(
+            f"Experiment {run_name} already exists. "
+            "Refusing to overwrite existing results."
+        )
 
     global_steps = 0
     update_count = 0
