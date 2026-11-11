@@ -1,0 +1,16 @@
+global_steps,episode,algorithm,seed
+100,1,ddqn,123
+200,3,ddqn,123
+300,4,ddqn,123
+400,5,ddqn,123
+500,6,ddqn,123
+600,8,ddqn,123
+700,10,ddqn,123
+800,10,ddqn,123
+900,12,ddqn,123
+1000,13,ddqn,123
+1100,13,ddqn,123
+1200,15,ddqn,123
+1300,18,ddqn,123
+1400,20,ddqn,123
+1500,20,ddqn,123

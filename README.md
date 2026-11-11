@@ -1194,3 +1194,31 @@ Saved: figures/dqn_vs_ddqn_q_bias_final.png
 ```
 ![](/figures/dqn_vs_ddqn_q_bias_final.png)
 
+### 实践：20.6.2 的前置步骤
+
+训练过程中，定期计算 Q-bias（Δ）并保存历史数据
+
+而现在的 train() 只能训练，不能在训练过程中插入额外测量逻辑。
+所以这一步的目的就是：
+- 不改坏现有训练逻辑
+- 给训练增加一个“扩展点”
+- 后面可以很方便地接入：
+  - Q-bias 监控
+  - 额外统计
+  - 训练过程分析
+
+> python -m tests.test_train_monitor
+```
+===== Training Summary =====
+Environment steps: 1534
+Gradient updates: 535
+Target synchronizations: 3
+Successful episodes: 4
+Saved monitor logs to: results/test_train_monitor.csv
+test_monitor_callback PASSED!
+
+All train-monitor tests PASSED!
+(deep-learning) jaden@Macbook-Pro ddqn-maze %
+```
+
+

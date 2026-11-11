@@ -1,3 +1,9 @@
+"""
+文件: train.py
+用途: 训练 DQN / DDQN, 并支持周期性监控回调
+运行: python -m train
+"""
+
 import random
 import numpy as np
 import torch
@@ -14,17 +20,38 @@ from evaluate import evaluate
 
 # 探索率衰减函数
 def epsilon_schedule(step):
-    # TODO 1:
-    # epsilon从1.0线形衰减至0.05
-    # 总衰减步数为20000
-    # 提示：max()、step/20000
+    """
+    epsilon 从 1.0 线性衰减到 0.05
+    总衰减步数 20000
+    """
     return max(0.05, 1 - 0.95 * step / 20000)
 
 
-# n_episodes：Number of Episodes，训练回合总数。
-# n_episodes=10 表示总共训练 10 个回合。
-# 从 env.reset() 开始，直到 done=True，通常就算完成一个 Episode
-def train(n_episodes=10, seed=0, algorithm="ddqn"):
+def train(
+    n_episodes=10,
+    seed=0,
+    algorithm="ddqn",
+    monitor_fn=None,
+    monitor_interval_steps=None,
+    monitor_output_path=None,
+):
+    """
+    参数:
+    - n_episodes: 训练回合数
+    - seed: 随机种子
+    - algorithm: "dqn" 或 "ddqn"
+    - monitor_fn: 可选监控函数
+    - monitor_interval_steps: 每隔多少个环境步调用一次 monitor_fn
+    - monitor_output_path: 监控结果保存路径（可选）
+    """
+
+    if algorithm not in {"dqn", "ddqn"}:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+    if monitor_fn is not None:
+        if monitor_interval_steps is None or monitor_interval_steps <= 0:
+            raise ValueError("monitor_interval_steps must be a positive integer")
+
     # 固定随机种子
     # Python 标准库 random
     # random.randint() 随机选择动作
@@ -48,37 +75,24 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
     # 统一实验名称
     run_name = f"{algorithm}_seed{seed}"
 
-    # 检查是否已经有实验结果
-    train_log_path = Path("logs") / f"{run_name}.csv"
-    eval_log_path = Path("logs") / f"{run_name}_eval.csv"
-    checkpoint_path = Path("checkpoints") / f"{run_name}_best.pt"
-
-    output_paths = [
-        train_log_path,
-        eval_log_path,
-        checkpoint_path,
-    ]
-
-    if any(path.exists() for path in output_paths):
-        raise FileExistsError(
-            f"Experiment {run_name} already has output files. " "Refusing to overwrite."
-        )
-
     global_steps = 0
-    update_count = 0  # 发生多少次真正的梯度更新
-    sync_count = 0  # Target Network同步了多少次
-    success_count = 0  # 有多少个Episode找到金币
+    update_count = 0
+    sync_count = 0
+    success_count = 0
+
     episode_logs = []
-    eval_logs = []  # 用于存储每隔 50 Episode 产生的一条评估记录。
+    eval_logs = []
+    monitor_logs = []
 
     best_success_rate = -1.0
-    # pt是pyTorch的缩写，通常用于保存神经网络参数
+
     checkpoint_path = Path("checkpoints") / f"{run_name}_best.pt"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
     for ep in range(n_episodes):
         state = env.reset()
         done = False
+
         ep_return = 0.0
         ep_steps = 0
         ep_losses = []
@@ -117,14 +131,31 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
             # 每500个全局环境步同步Target
             if global_steps % 500 == 0:
                 agent.sync_target()
-                sync_count += 1  # 记录 Target 同步次数
-            # TODO 5:
-            # 更新state和ep_return
-            # ep_return 表示 Episode Return（单回合累计奖励）
+                sync_count += 1
+
+            # ===== 新增：训练监控钩子 =====
+            if (
+                monitor_fn is not None
+                and monitor_interval_steps is not None
+                and global_steps % monitor_interval_steps == 0
+            ):
+                record = monitor_fn(
+                    agent=agent,
+                    global_steps=global_steps,
+                    episode=ep + 1,
+                    algorithm=algorithm,
+                    seed=seed,
+                )
+
+                if record is not None:
+                    if not isinstance(record, dict):
+                        raise TypeError("monitor_fn must return a dict or None")
+                    monitor_logs.append(record)
+
             state = next_state
             ep_return += reward
 
-        success = int(tuple(env.pos) == env.coin)  # 通过环境终局位置判断是否到达金币
+        success = int(tuple(env.pos) == env.coin)
         success_count += success
 
         # 本回合平均Loss
@@ -200,6 +231,7 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
                 checkpoint_data = {
                     "episode": ep + 1,
                     "seed": seed,
+                    "algorithm": algorithm,
                     "eval_success_rate": success_rate,
                     "online_state_dict": agent.online.state_dict(),
                 }
@@ -211,7 +243,8 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
     print("Gradient updates:", update_count)
     print("Target synchronizations:", sync_count)
     print("Successful episodes:", success_count)
-    # logs/ddqn_seed0.csv
+
+    # ===== 保存训练日志 =====
     log_path = Path("logs") / f"{run_name}.csv"
     # parents=True	如果上级目录不存在，也自动创建
     # exist_ok=True	如果文件夹已经存在，不要报错
@@ -221,10 +254,10 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
     # with	自动管理文件的打开和关闭
     # as f	把打开的文件对象赋给变量 f
     # 使用 "w"，意味着每次运行训练脚本，同一路径下原来的 CSV 内容会被覆盖。
-    with log_path.open("w",newline="",encoding="utf-8") as f:
+    with log_path.open("w", newline="", encoding="utf-8") as f:
         # csv.DictWriter 就是专门将 Python 字典写入 CSV 文件的工具。
         # fieldnames=[]指出CSV 文件的六个列名，以及列的排列顺序。
-        writer=csv.DictWriter(
+        writer = csv.DictWriter(
             f,
             fieldnames=[
                 "episode",
@@ -232,8 +265,8 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
                 "success",
                 "steps",
                 "epsilon",
-                "loss"
-            ]
+                "loss",
+            ],
         )
         # fmt:on
         # TODO 2:
@@ -243,23 +276,43 @@ def train(n_episodes=10, seed=0, algorithm="ddqn"):
         # TODO 3:
         # 把episode_logs中的记录全部写入文件
         writer.writerows(episode_logs)
-    # 评估CSV路径
-    eval_log_path=Path("logs")/f"{run_name}_eval.csv"
-    with eval_log_path.open("w",newline="",encoding="utf-8") as f:
-        writer=csv.DictWriter(
+
+    # ===== 保存评估日志 =====
+    eval_log_path = Path("logs") / f"{run_name}_eval.csv"
+    with eval_log_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
             f,
             fieldnames=[
                 "episode",
                 "success_rate",
                 "avg_return",
-                "avg_steps"
-            ]
+                "avg_steps",
+            ],
         )
         writer.writeheader()
         writer.writerows(eval_logs)
+
+    # ===== 新增：保存 monitor 日志 =====
+    if monitor_logs:
+        if monitor_output_path is None:
+            monitor_output_path = Path("results") / f"{run_name}_monitor.csv"
+        else:
+            monitor_output_path = Path(monitor_output_path)
+
+        monitor_output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        fieldnames = list(monitor_logs[0].keys())
+
+        with monitor_output_path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(monitor_logs)
+
+        print(f"Saved monitor logs to: {monitor_output_path}")
+
     return agent
 
 
 # 检查当前文件是否作为主程序运行
 if __name__ == "__main__":
-    train(n_episodes=10, seed=99, algorithm="dqn")
+    train(n_episodes=10, seed=999, algorithm="ddqn")
