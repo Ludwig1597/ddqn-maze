@@ -1328,4 +1328,6 @@ Replay Buffer = 1,000；Target Sync = 500
 
 ![](/figures/ablation_comparison.png)
 
-## 实践23 准备报告
+## 实践23 实践报告
+
+[DDQN项目实践报告.docx](./DDQN项目实践报告.docx)
