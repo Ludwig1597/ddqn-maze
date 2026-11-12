@@ -1251,4 +1251,37 @@ All train-monitor tests PASSED!
 
 总体来看，本实验观察到了 DDQN 在训练早期降低 Q 值正偏差的现象，但其优势随训练推进有所减弱。这也说明算法效果应结合训练过程、估计偏差和任务性能共同评价，而不能仅凭最终成功率判断。
 
+Q-value Bias = 神经网络预测的 Q 值 − 实际策略价值的估计值。
+
+### 实践 22.1：去掉 Target Network 的消融实验
+
+唯一的实验变量：
+\[
+\boxed{\text{Target Sync Interval}:500\rightarrow1}
+\]
+
+为什么每步同步就相当于去掉 Target Network？
+标准 DDQN 的目标是：
+\[
+y=r+\gamma Q_{\theta^-}(s',
+\arg\max_a Q_\theta(s',a))
+\]
+
+其中 \(\theta^-\) 是 Target Network 参数，\(\theta\) 是 Online Network 参数。
+
+如果每一步都同步：
+\[
+\theta^-\leftarrow\theta
+\]
+
+那么两个网络在每次目标计算前具有相同参数：
+\[
+y=r+\gamma\max_a Q_\theta(s',a)
+\]
+
+此时 Target Network 不再提供延迟更新的稳定目标。我们仍然保留两个网络对象，便于复用原有 DDQN 代码，但功能上已经退化为没有独立延迟目标网络的 Q-learning 更新。
+
+这还意味着 DDQN 的动作选择与评估解耦也失去了效果，因此这个实验验证的是目标网络延迟更新机制整体被移除后的表现，而非完全独立地测量网络数量的作用。
+
+预期现象： 去掉延迟目标网络后，TD Target 更容易随参数更新而变化，可能导致学习不稳定、回报震荡或 Q 值偏差增加。
 

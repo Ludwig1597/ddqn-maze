@@ -35,6 +35,7 @@ def train(
     monitor_interval_steps=None,
     monitor_output_path=None,
     run_tag=None,
+    target_sync_interval=500,
 ):
     """
     参数:
@@ -45,6 +46,12 @@ def train(
     - monitor_interval_steps: 每隔多少个环境步调用一次 monitor_fn
     - monitor_output_path: 监控结果保存路径（可选）
     """
+    if (
+        not isinstance(target_sync_interval, int)
+        or isinstance(target_sync_interval, bool)
+        or target_sync_interval < 1
+    ):
+        raise ValueError("target_sync_interval must be a positive integer")
 
     if algorithm not in {"dqn", "ddqn"}:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
@@ -143,8 +150,8 @@ def train(
             global_steps += 1
             ep_steps += 1
 
-            # 每500个全局环境步同步Target
-            if global_steps % 500 == 0:
+            # 每target_sync_interval个全局环境步同步Target
+            if global_steps % target_sync_interval == 0:
                 agent.sync_target()
                 sync_count += 1
 
