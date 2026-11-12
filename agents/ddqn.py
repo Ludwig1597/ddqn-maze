@@ -87,12 +87,22 @@ class DDQNAgent:
     # batch_size: 每次从 Buffer 抽取的经验数量
     # warmup: 预热阶段，在 Replay Buffer 中积累至少 1000 条经验之后，才开始训练 QNet。
     # 每走一步，智能体会产生一条经验: (s,a,r,s',done)
-    def __init__(self, gamma=0.95, lr=1e-3, batch_size=64, warmup=1000):
+    def __init__(
+        self,
+        gamma=0.95,
+        lr=1e-3,
+        batch_size=64,
+        warmup=1000,
+        replay_capacity=50_000,
+    ):
         self.gamma = gamma
         self.batch_size = batch_size
         self.warmup = warmup
         # 经验回放池
-        self.buf = ReplayBuffer(capacity=50_000)
+        if replay_capacity < max(warmup, batch_size):
+            raise ValueError("replay_capacity must be >= warmup and batch_size")
+
+        self.buf = ReplayBuffer(capacity=replay_capacity)
 
         # TODO 1:
         # 创建Online QNet和Target QNet

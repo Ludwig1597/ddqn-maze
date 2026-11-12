@@ -36,6 +36,7 @@ def train(
     monitor_output_path=None,
     run_tag=None,
     target_sync_interval=500,
+    replay_capacity=50_000,
 ):
     """
     参数:
@@ -74,7 +75,7 @@ def train(
     # 随机生成金币、陷阱的位置
     env = CoinMaze(seed=seed)
     if algorithm == "ddqn":
-        agent = DDQNAgent()
+        agent = DDQNAgent(replay_capacity=replay_capacity)
     elif algorithm == "dqn":
         agent = DQNAgent()
     else:
