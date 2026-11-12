@@ -73,7 +73,11 @@ def main():
 
     output = Path("figures/delta_training.png")
     output.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output, dpi=200)
+    plt.savefig(
+        output,
+        dpi=300,
+        bbox_inches="tight",
+    )
     plt.close()
 
     print(f"Saved: {output}")

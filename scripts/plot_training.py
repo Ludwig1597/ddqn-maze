@@ -1,237 +1,445 @@
 """
 文件: scripts/plot_training.py
-用途: 绘制五种子 DDQN 训练回报曲线
-运行: python -m scripts.plot_training
+
+用途:
+    绘制五种子 DDQN Return 和 Success Rate 曲线。
+
+图1:
+    原始 Return + 50 Episode MA + 95% CI
+
+图2:
+    Training Success: 原始值 + 50 Episode MA + 95% CI
+    Evaluation Success: 每50 Episode独立评估 + 95% CI
+
+运行:
+    python -m scripts.plot_training
 """
 
 import csv
-import numpy as np
-import matplotlib.pyplot as plt
-
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 SEEDS = range(5)
 WINDOW = 50
+T_CRITICAL = 2.776
 
 
-def load_training_returns(seed):
+# ==================================================
+# 1. 加载训练数据
+# ==================================================
+
+
+def load_training_data(seed):
+
     path = Path(f"logs/ddqn_seed{seed}.csv")
 
-    with open(path, "r", newline="", encoding="utf-8") as f:
+    if not path.exists():
+        raise FileNotFoundError(path)
+
+    with path.open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
 
-    returns = []
-    for row in rows:
-        ep_return = float(row["return"])
-        returns.append(ep_return)
-    return np.array(returns, dtype=np.float64)
+    required = {"episode", "return", "success"}
 
+    if not required.issubset(rows[0].keys()):
+        raise ValueError(f"Missing columns in {path}")
 
-# 这个函数叫做 移动平均（Moving Average），作用是：对 DDQN 训练 Return 曲线进行平滑，减少随机波动，可以更容易看出模型是否在逐渐学习。
-def moving_average(values, window=50):
-    # 使用卷积实现移动平均
-    # np.ones(3) 是 NumPy 里创建数组的函数，意思是：生成一个包含 3 个元素、每个元素都是 1 的一维数组。
-    # 这个 kernel 叫做卷积核（Convolution Kernel）
-    kernel = np.ones(window) / window
-    # convolve 是 Convolution（卷积）的意思：让一个小窗口沿着数据序列滑动，每次计算一个结果。
-    # mode="valid"：只保留完整窗口的计算结果
-    return np.convolve(values, kernel, mode="valid")
-
-
-def plot_training_return():
-    curves = []
-    plt.figure(figsize=(11, 6))
-    for seed in SEEDS:
-        # TODO 2:
-        # 调用 load_training_returns(seed)
-        # 得到 returns
-        returns = load_training_returns(seed)
-
-        # TODO 3:
-        # 调用 moving_average(returns, WINDOW)
-        # 得到平滑曲线
-        smooth_returns = moving_average(returns, WINDOW)
-
-        # TODO 4:
-        # 把每个 seed 的平滑曲线
-        # 添加到 curves 列表
-        curves.append(smooth_returns)
-
-        # TODO 5:
-        # 使用 plt.plot() 绘制每个 Seed 的曲线
-        # len(smooth_returns)=2000-50+1
-        # np.arange(start,end)会生成从start开始，不包含end的连续数值
-        # np.arrage(50,2001)=[50,51,52,...,2000]
-        # 因为移动平均窗口是 50。第一个平滑值：Episode 1～50 的平均 Return，对应横坐标 50。
-        episodes = np.arange(WINDOW, WINDOW + len(smooth_returns))
-        (line,) = plt.plot(
-            episodes, smooth_returns, label=f"Seed {seed}", linewidth=1.2, alpha=0.7
-        )
-        plt.plot(
-            np.arange(1, len(returns) + 1),
-            returns,
-            color=line.get_color(),
-            linewidth=0.5,
-            alpha=0.06,
-        )
-        # plt.plot(episodes, smooth_returns, label=f"Seed{seed}")
-
-    # ===== Step 6: 五种子统计 =====
-    # TODO 6:
-    # 将 curves 转换成 NumPy 数组
-    # 目标形状：(5, 1951)
-    curves_array = np.array(curves)
-
-    # TODO 7:
-    # 计算五种子平均 Return
-    # 提示：np.mean(..., axis=0)
-    # axis=0：沿第 0 维计算，即对不同行的同一列数据求平均，得到每一列的均值。
-    mean_returns = np.mean(curves_array, axis=0)
-
-    # TODO 8:
-    # 计算每个 Episode 的样本标准差
-    # 提示：np.std(..., axis=0, ddof=1)
-    std_returns = np.std(curves_array, axis=0, ddof=1)
-
-    # ===== Step 7: 计算 95% 置信带 =====
-
-    n_seeds = len(SEEDS)
-
-    # 五种子、df=4 的双侧 t 临界值
-    t_critical = 2.776
-
-    # TODO 9:
-    # 标准误：std / sqrt(n)
-    standard_error = std_returns / np.sqrt(n_seeds)
-
-    # TODO 10:
-    # 置信区间上下界
-    ci_lower = mean_returns - t_critical * standard_error
-    ci_upper = mean_returns + t_critical * standard_error
-
-    # ===== Step 8: 绘图 =====
-
-    episodes = np.arange(WINDOW, WINDOW + len(mean_returns))
-
-    # TODO 11:
-    # 使用 plt.plot() 绘制 mean_returns
-    # 建议黑色、linewidth=2.5
-    # label="Mean Return"
-    plt.plot(episodes, mean_returns, color="black", linewidth=2.5, label="Mean Return")
-
-    # TODO 12:
-    # 使用 plt.fill_between()
-    # 绘制 ci_lower 到 ci_upper 之间的阴影
-    # 建议 alpha=0.2
-    # label="95% CI"
-    plt.fill_between(
-        episodes, ci_lower, ci_upper, color="gray", alpha=0.3, label="95% CI"
+    episodes = np.array(
+        [int(row["episode"]) for row in rows],
+        dtype=int,
     )
 
-    plt.xlabel("Episode")
-    plt.ylabel("Episode Return")
-    plt.title("DDQN Training Return - 5 Seeds")
+    returns = np.array(
+        [float(row["return"]) for row in rows],
+        dtype=np.float64,
+    )
 
-    plt.legend()  # 显示图例
-    plt.grid(alpha=0.3)  # 显示网格线，alpha是格线的透明度
+    successes = np.array(
+        [float(row["success"]) for row in rows],
+        dtype=np.float64,
+    )
 
-    Path("figures").mkdir(exist_ok=True)
-    # dpi=200：控制图片的分辨率，影响图片清晰度和像素尺寸。
-    # bbox_inches="tight"：自动裁剪图片四周多余的空白，同时尽量保留标题、坐标轴标签等内容。
-    plt.savefig("figures/ddqn_training_return.png", dpi=200, bbox_inches="tight")
+    if not np.array_equal(
+        episodes,
+        np.arange(1, len(rows) + 1),
+    ):
+        raise ValueError(f"Invalid episode sequence: {path}")
 
-    plt.show()
+    if not np.all(np.isin(successes, [0, 1])):
+        raise ValueError(f"Invalid success values: {path}")
+
+    if not np.all(np.isfinite(returns)):
+        raise ValueError(f"Invalid return values: {path}")
+
+    return episodes, returns, successes
+
+
+# ==================================================
+# 2. 加载独立评估数据
+# ==================================================
 
 
 def load_eval_success_rate(seed):
-    path = Path(f"logs/ddqn_seed{seed}_eval.csv")
-    with open(path, "r", newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    # TODO 1:
-    # 读取 episode 列，转换成整数数组
-    # Note：CSV 读出的数字默认是字符串。
-    episodes = []
-    for row in rows:
-        episodes.append(int(row["episode"]))
-    # NumPy 数组可以直接进行批量数值计算
-    episodes = np.array(episodes, dtype=int)
 
-    # TODO 2:
-    # 读取 success_rate 列，转换成浮点数组
-    success_rates = []
-    for row in rows:
-        success_rates.append(float(row["success_rate"]))
-    success_rates = np.array(success_rates, dtype=float)
+    path = Path(f"logs/ddqn_seed{seed}_eval.csv")
+
+    if not path.exists():
+        raise FileNotFoundError(path)
+
+    with path.open(encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    episodes = np.array(
+        [int(row["episode"]) for row in rows],
+        dtype=int,
+    )
+
+    success_rates = np.array(
+        [float(row["success_rate"]) for row in rows],
+        dtype=np.float64,
+    )
+
+    if not np.all(np.isfinite(success_rates)):
+        raise ValueError(f"Invalid evaluation data: {path}")
+
+    if not np.all((success_rates >= 0) & (success_rates <= 1)):
+        raise ValueError(f"Invalid success rate: {path}")
+
     return episodes, success_rates
 
 
-def plot_eval_success_rate():
+# ==================================================
+# 3. 移动平均
+# ==================================================
 
-    curves = []
-    plt.figure(figsize=(11, 6))
 
-    # TODO 3:
-    # 遍历 Seed 0～4
-    # 读取 episode 和 success_rate
-    # 验证各 Seed 的 episode 数组一致
-    # 把 success_rate 加入 curves
-    # 绘制每个 Seed 的 Success Rate 曲线
-    reference_episodes = None  # 参考回合编号
+def moving_average(values, window=WINDOW):
+
+    if len(values) < window:
+        raise ValueError("Not enough values for moving average")
+
+    kernel = np.ones(window) / window
+
+    return np.convolve(
+        values,
+        kernel,
+        mode="valid",
+    )
+
+
+# ==================================================
+# 4. 五种子统计
+# ==================================================
+
+
+def calculate_statistics(curves):
+
+    matrix = np.asarray(curves, dtype=np.float64)
+
+    if matrix.shape[0] != 5:
+        raise ValueError("Expected 5 seeds")
+
+    mean = np.mean(matrix, axis=0)
+
+    std = np.std(
+        matrix,
+        axis=0,
+        ddof=1,
+    )
+
+    standard_error = std / np.sqrt(5)
+
+    margin = T_CRITICAL * standard_error
+
+    lower = mean - margin
+    upper = mean + margin
+
+    return mean, lower, upper
+
+
+# ==================================================
+# 5. Return Curve
+# ==================================================
+
+
+def plot_training_return():
+
+    raw_curves = []
+    smooth_curves = []
+    reference_episodes = None
+
     for seed in SEEDS:
-        episodes, success_rate = load_eval_success_rate(seed)
+
+        episodes, returns, _ = load_training_data(seed)
+
         if reference_episodes is None:
             reference_episodes = episodes
-        else:
-            # 验证 Seed 1/2/3/4 的评估 Episode 编号与 Seed 0 完全一致。
-            assert np.array_equal(episodes, reference_episodes)
-        curves.append(success_rate)
-        plt.plot(episodes, success_rate, label=f"Seed {seed}")
+        elif not np.array_equal(episodes, reference_episodes):
+            raise ValueError("Training episodes are not aligned")
 
-    # TODO 4:
-    # 将 curves 转成 (5, 40) 数组
-    # 计算平均值、样本标准差
-    # 计算 95% CI
-    curves_array = np.array(curves, dtype=float)
-    assert curves_array.shape == (5, 40)
-    mean_success_rates = np.mean(curves_array, axis=0)
-    std_success_rates = np.std(curves_array, axis=0, ddof=1)
-    n_seeds = len(SEEDS)
-    t_critical = 2.776
-    standard_error = std_success_rates / np.sqrt(n_seeds)
-    ci_lower = mean_success_rates - t_critical * standard_error
-    ci_upper = mean_success_rates + t_critical * standard_error
+        smooth_curves.append(moving_average(returns))
 
-    # TODO 5:
-    # 绘制平均 Success Rate 曲线
-    plt.plot(
-        reference_episodes,
-        mean_success_rates,
+        raw_curves.append(returns)
+
+    smooth_matrix = np.asarray(smooth_curves)
+
+    mean, lower, upper = calculate_statistics(smooth_matrix)
+
+    smooth_episodes = reference_episodes[WINDOW - 1 :]
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    # 原始 Return
+    for i, returns in enumerate(raw_curves):
+
+        ax.plot(
+            reference_episodes,
+            returns,
+            color="tab:blue",
+            linewidth=0.5,
+            alpha=0.07,
+            label="Raw Episode Return" if i == 0 else None,
+        )
+
+    # 每个 Seed 的移动平均
+    for smooth in smooth_curves:
+
+        ax.plot(
+            smooth_episodes,
+            smooth,
+            color="tab:blue",
+            linewidth=0.8,
+            alpha=0.25,
+        )
+
+    # 五种子平均移动平均
+    ax.plot(
+        smooth_episodes,
+        mean,
         color="black",
-        linewidth=2.5,
-        label="Mean Success Rate",
-    )
-    # 使用 fill_between 绘制 95% CI
-    plt.fill_between(
-        reference_episodes, ci_lower, ci_upper, color="gray", alpha=0.3, label="95% CI"
+        linewidth=2.2,
+        label="Mean 50-Episode MA",
     )
 
-    plt.xlabel("Episode")
-    plt.ylabel("Evaluation Success Rate")
-    plt.title("DDQN Evaluation Success Rate - 5 Seeds")
+    # 95% CI
+    ax.fill_between(
+        smooth_episodes,
+        lower,
+        upper,
+        color="gray",
+        alpha=0.25,
+        label="95% CI",
+    )
 
-    plt.ylim(
-        0, 1
-    )  # plt.ylim(0, 1) 是 Matplotlib 中用于设置图表 Y 轴（纵坐标）显示范围的函数
-    plt.legend()
-    plt.grid(alpha=0.3)
+    ax.set_xlabel("Episode")
+    ax.set_ylabel("Episode Return")
+    ax.set_title("DDQN Training Return - 5 Seeds")
+
+    ax.grid(alpha=0.3)
+    ax.legend()
 
     Path("figures").mkdir(exist_ok=True)
 
-    plt.savefig("figures/ddqn_eval_success_rate.png", dpi=200, bbox_inches="tight")
+    output = "figures/ddqn_training_return.png"
 
-    plt.show()
+    fig.savefig(
+        output,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(fig)
+
+    print("Saved:", output)
+
+
+# ==================================================
+# 6. Training + Evaluation Success Rate
+# ==================================================
+
+
+def plot_success_rate():
+
+    train_raw = []
+    train_smooth = []
+
+    eval_curves = []
+
+    train_episodes_ref = None
+    eval_episodes_ref = None
+
+    for seed in SEEDS:
+
+        episodes, _, successes = load_training_data(seed)
+
+        if train_episodes_ref is None:
+            train_episodes_ref = episodes
+        elif not np.array_equal(episodes, train_episodes_ref):
+            raise ValueError("Training episodes are not aligned")
+
+        train_raw.append(successes)
+
+        train_smooth.append(moving_average(successes))
+
+        eval_episodes, eval_success = load_eval_success_rate(seed)
+
+        if eval_episodes_ref is None:
+            eval_episodes_ref = eval_episodes
+        elif not np.array_equal(
+            eval_episodes,
+            eval_episodes_ref,
+        ):
+            raise ValueError("Evaluation episodes are not aligned")
+
+        eval_curves.append(eval_success)
+
+    # Training Success Statistics
+    train_matrix = np.asarray(train_smooth)
+
+    train_mean, train_lower, train_upper = calculate_statistics(train_matrix)
+
+    smooth_episodes = train_episodes_ref[WINDOW - 1 :]
+
+    # Evaluation Success Statistics
+    eval_mean, eval_lower, eval_upper = calculate_statistics(eval_curves)
+
+    fig, axes = plt.subplots(
+        2,
+        1,
+        figsize=(12, 9),
+    )
+
+    ax1, ax2 = axes
+
+    # ----------------------------------------------
+    # Top: Training Success
+    # ----------------------------------------------
+
+    for i, raw in enumerate(train_raw):
+
+        ax1.plot(
+            train_episodes_ref,
+            raw,
+            color="tab:blue",
+            linewidth=0.5,
+            alpha=0.06,
+            label="Raw Training Success" if i == 0 else None,
+        )
+
+    for smooth in train_smooth:
+
+        ax1.plot(
+            smooth_episodes,
+            smooth,
+            color="tab:blue",
+            alpha=0.2,
+            linewidth=0.8,
+        )
+
+    ax1.plot(
+        smooth_episodes,
+        train_mean,
+        color="black",
+        linewidth=2.2,
+        label="Mean 50-Episode MA",
+    )
+
+    ax1.fill_between(
+        smooth_episodes,
+        np.clip(train_lower, 0, 1),
+        np.clip(train_upper, 0, 1),
+        color="gray",
+        alpha=0.25,
+        label="95% CI",
+    )
+
+    ax1.set_title("Training Success Rate")
+    ax1.set_ylabel("Success Rate")
+    ax1.set_ylim(0, 1)
+    ax1.grid(alpha=0.3)
+    ax1.legend()
+
+    # ----------------------------------------------
+    # Bottom: Independent Evaluation Success
+    # ----------------------------------------------
+
+    for i, curve in enumerate(eval_curves):
+
+        ax2.plot(
+            eval_episodes_ref,
+            curve,
+            color="tab:blue",
+            marker="o",
+            markersize=2.5,
+            linewidth=0.8,
+            alpha=0.3,
+            label="Seed Evaluation" if i == 0 else None,
+        )
+
+    ax2.plot(
+        eval_episodes_ref,
+        eval_mean,
+        color="black",
+        linewidth=2.2,
+        marker="o",
+        markersize=3,
+        label="Mean Evaluation Success",
+    )
+
+    ax2.fill_between(
+        eval_episodes_ref,
+        np.clip(eval_lower, 0, 1),
+        np.clip(eval_upper, 0, 1),
+        color="gray",
+        alpha=0.25,
+        label="95% CI",
+    )
+
+    ax2.set_title(
+        "Independent Evaluation Success Rate "
+        "(epsilon = 0, 10 episodes per checkpoint)"
+    )
+
+    ax2.set_xlabel("Training Episode")
+    ax2.set_ylabel("Evaluation Success Rate")
+    ax2.set_ylim(0, 1)
+    ax2.grid(alpha=0.3)
+    ax2.legend()
+
+    fig.suptitle(
+        "DDQN Training and Evaluation Success Rate - 5 Seeds",
+        fontsize=14,
+    )
+
+    fig.tight_layout()
+
+    Path("figures").mkdir(exist_ok=True)
+
+    output = "figures/ddqn_success_rate_curve.png"
+
+    fig.savefig(
+        output,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(fig)
+
+    print("Saved:", output)
+
+
+# ==================================================
+# 7. Main
+# ==================================================
+
+
+def main():
+    plot_training_return()
+    plot_success_rate()
+    print("\nTraining figures completed.")
 
 
 if __name__ == "__main__":
-    plot_training_return()
-    plot_eval_success_rate()
+    main()

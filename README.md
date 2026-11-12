@@ -1327,3 +1327,5 @@ Replay Buffer = 1,000；Target Sync = 500
 研究历史经验保留能力对学习效果的影响。
 
 ![](/figures/ablation_comparison.png)
+
+## 实践23 准备报告
