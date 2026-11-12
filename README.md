@@ -1330,4 +1330,4 @@ Replay Buffer = 1,000；Target Sync = 500
 
 ## 实践23 实践报告
 
-[DDQN项目实践报告.docx](./DDQN项目实践报告.docx)
+[DDQN项目实践报告.docx](/doc/DDQN项目实践报告.docx)
