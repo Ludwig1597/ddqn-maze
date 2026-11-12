@@ -2,9 +2,14 @@ import numpy as np
 from envs.maze import CoinMaze
 
 
-def evaluate(agent, episodes=20, seed=999, epsilon=0.0):
-    # 独立环境，避免影响训练环境的随机状态
-    env = CoinMaze(seed=seed)
+def evaluate(agent, episodes=20, seed=999, epsilon=0.0, size=8, max_steps=200):
+    # 独立环境，避免影响训练环境的随机状态；环境规格与训练配置保持一致。
+    env_kwargs = {}
+    if size != 8:
+        env_kwargs["size"] = size
+    if max_steps != 200:
+        env_kwargs["max_steps"] = max_steps
+    env = CoinMaze(seed=seed, **env_kwargs)
 
     returns = []
     successes = []

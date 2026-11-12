@@ -16,27 +16,32 @@ from envs.maze import CoinMaze
 from agents.ddqn import DDQNAgent
 from agents.dqn import DQNAgent
 from evaluate import evaluate
+from config import load_config
 
 
 # 探索率衰减函数
-def epsilon_schedule(step):
-    """
-    epsilon 从 1.0 线性衰减到 0.05
-    总衰减步数 20000
-    """
-    return max(0.05, 1 - 0.95 * step / 20000)
+def epsilon_schedule(step, start=1.0, end=0.05, decay_steps=20_000):
+    """线性衰减 epsilon, 并在 end 处封底。"""
+    if decay_steps <= 0:
+        raise ValueError("decay_steps must be positive")
+    if start < end:
+        raise ValueError("start must be greater than or equal to end")
+
+    fraction = min(step / decay_steps, 1.0)
+    return start - (start - end) * fraction
 
 
 def train(
-    n_episodes=10,
-    seed=0,
-    algorithm="ddqn",
+    n_episodes=None,
+    seed=None,
+    algorithm=None,
     monitor_fn=None,
     monitor_interval_steps=None,
     monitor_output_path=None,
     run_tag=None,
-    target_sync_interval=500,
-    replay_capacity=50_000,
+    target_sync_interval=None,
+    replay_capacity=None,
+    config=None,
 ):
     """
     参数:
@@ -47,12 +52,49 @@ def train(
     - monitor_interval_steps: 每隔多少个环境步调用一次 monitor_fn
     - monitor_output_path: 监控结果保存路径（可选）
     """
+    # 如果调用者没有传入 config，则读取项目默认配置。
+    cfg = load_config() if config is None else config
+    if not isinstance(cfg, dict):
+        raise TypeError("config must be a dictionary returned by load_config()")
+
+    env_cfg = cfg.get("environment", {})
+    agent_cfg = cfg.get("agent", {})
+    training_cfg = cfg.get("training", {})
+    evaluation_cfg = cfg.get("evaluation", {})
+    epsilon_cfg = training_cfg.get("epsilon", {})
+
+    # 显式传入 train() 的参数优先级高于 YAML；未传入时才使用 YAML。
+    n_episodes = training_cfg.get("episodes", 10) if n_episodes is None else n_episodes
+    seed = training_cfg.get("seed", 0) if seed is None else seed
+    algorithm = training_cfg.get("algorithm", "ddqn") if algorithm is None else algorithm
+    target_sync_interval = (
+        training_cfg.get("target_sync_interval", 500)
+        if target_sync_interval is None else target_sync_interval
+    )
+    replay_capacity = (
+        agent_cfg.get("replay_capacity", 50_000)
+        if replay_capacity is None else replay_capacity
+    )
+
+    env_size = env_cfg.get("size", 8)
+    max_steps = env_cfg.get("max_steps", 200)
+    eval_interval = evaluation_cfg.get("interval_episodes", 50)
+    eval_episodes = evaluation_cfg.get("episodes", 10)
+    eval_seed = evaluation_cfg.get("seed", 999)
+
     if (
         not isinstance(target_sync_interval, int)
         or isinstance(target_sync_interval, bool)
         or target_sync_interval < 1
     ):
         raise ValueError("target_sync_interval must be a positive integer")
+
+    if (
+        not isinstance(eval_interval, int)
+        or isinstance(eval_interval, bool)
+        or eval_interval < 1
+    ):
+        raise ValueError("evaluation.interval_episodes must be a positive integer")
 
     if algorithm not in {"dqn", "ddqn"}:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
@@ -73,13 +115,36 @@ def train(
     torch.manual_seed(seed)
     # 迷宫内部的随机机制
     # 随机生成金币、陷阱的位置
-    env = CoinMaze(seed=seed)
-    if algorithm == "ddqn":
-        agent = DDQNAgent(replay_capacity=replay_capacity)
-    elif algorithm == "dqn":
-        agent = DQNAgent()
+    # 保持 CoinMaze(seed=...) 的旧调用形式，便于已有测试替身/脚本兼容。
+    env_kwargs = {}
+    if env_size != 8:
+        env_kwargs["size"] = env_size
+    if max_steps != 200:
+        env_kwargs["max_steps"] = max_steps
+    env = CoinMaze(seed=seed, **env_kwargs)
+
+    agent_kwargs = {
+        "gamma": agent_cfg.get("gamma", 0.95),
+        "lr": agent_cfg.get("learning_rate", 1e-3),
+        "batch_size": agent_cfg.get("batch_size", 64),
+        "warmup": agent_cfg.get("warmup", 1000),
+        "replay_capacity": replay_capacity,
+    }
+
+    agent_class = DDQNAgent if algorithm == "ddqn" else DQNAgent
+    default_agent_kwargs = {
+        "gamma": 0.95,
+        "lr": 1e-3,
+        "batch_size": 64,
+        "warmup": 1000,
+        "replay_capacity": 50_000,
+    }
+    # 默认配置与 Agent 构造函数默认值相同时，保留无参构造的旧接口。
+    # 这也兼容项目测试中用于替换 Agent 的轻量 FakeAgent。
+    if agent_kwargs == default_agent_kwargs:
+        agent = agent_class()
     else:
-        raise ValueError(f"Unsupported algorithm:{algorithm}")
+        agent = agent_class(**agent_kwargs)
 
     # 统一实验名称
     run_name = f"{algorithm}_seed{seed}"
@@ -121,7 +186,7 @@ def train(
         ep_losses = []
 
         while not done:
-            eps = epsilon_schedule(global_steps)
+            eps = epsilon_schedule(global_steps, **epsilon_cfg)
 
             # TODO 2:
             # 使用agent.act()选择动作
@@ -210,13 +275,19 @@ def train(
         )
 
         # 每50Episode评估一次
-        if (ep + 1) % 50 == 0:
+        if (ep + 1) % eval_interval == 0:
             # TODO 1:
             # 调用evaluate()
             # 使用当前agent
             # episodes=10，seed=999
             # 评估使用默认epsilon=0.0
-            result = evaluate(agent, episodes=10, seed=999)
+            result = evaluate(
+                agent,
+                episodes=eval_episodes,
+                seed=eval_seed,
+                size=env_size,
+                max_steps=max_steps,
+            )
             success_rate = result["success_rate"]
             # 14 TODO 1:
             # 向 eval_logs 添加一个字典
@@ -338,4 +409,5 @@ def train(
 
 # 检查当前文件是否作为主程序运行
 if __name__ == "__main__":
-    train(n_episodes=10, seed=999, algorithm="ddqn")
+    # 默认读取 configs/base.yaml；命令行无需再手动填写超参数。
+    train()

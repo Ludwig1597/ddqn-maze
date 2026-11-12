@@ -1,0 +1,28 @@
+# DDQN / DQN 基线实验配置
+# 修改这里的参数后，train.py 的默认训练入口会自动读取。
+
+environment:
+  size: 8
+  max_steps: 200
+
+agent:
+  gamma: 0.95
+  learning_rate: 0.001
+  batch_size: 64
+  warmup: 1000
+  replay_capacity: 50000
+
+training:
+  algorithm: ddqn
+  episodes: 10
+  seed: 999
+  target_sync_interval: 500
+  epsilon:
+    start: 1.0
+    end: 0.05
+    decay_steps: 20000
+
+evaluation:
+  interval_episodes: 50
+  episodes: 10
+  seed: 999
