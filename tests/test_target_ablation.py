@@ -24,7 +24,7 @@ class FakeBuffer:
 class FakeAgent:
     last_instance = None
 
-    def __init__(self):
+    def __init__(self, replay_capacity=50_000):
         self.buf = FakeBuffer()
         self.sync_calls = 0
         FakeAgent.last_instance = self
