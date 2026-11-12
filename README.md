@@ -1311,3 +1311,19 @@ self.buf = ReplayBuffer(capacity=50_000)
 3. 训练样本多样性可能下降。
 4. 网络可能更容易遗忘以前学到的状态动作关系。
 5. 训练回报和成功率可能出现更明显的波动。
+
+### 实践 22.3：三组实验对比与消融结果分析
+
+回答一个问题：DDQN 的 Target Network 和 Replay Buffer，究竟对训练效果有什么影响？
+**A. 完整 DDQN**
+Baseline
+Replay Buffer = 50,000；Target Sync = 500
+作为所有消融实验的参照。
+**B. 去掉 Target Network**
+Replay Buffer = 50,000；Target Sync = 1
+研究目标网络延迟同步机制对训练稳定性的影响。
+**C. 缩小 Replay Buffer**
+Replay Buffer = 1,000；Target Sync = 500
+研究历史经验保留能力对学习效果的影响。
+
+![](/figures/ablation_comparison.png)
